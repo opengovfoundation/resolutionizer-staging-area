@@ -1,0 +1,56 @@
+{
+  "exclude": [
+    "(^deps/)",
+    "(^_build/)",
+    "(^node_modules/)",
+    "(^web/elm/elm-stuff/)",
+    "(^support/arcanist/arcanist-elixir-support/)"
+  ],
+  "linters": {
+    "chmod": {
+      "type": "chmod"
+    },
+    "elixir": {
+      "type": "elixirdogma",
+      "include": "(\\.ex[s]?$)"
+    },
+    "filename": {
+      "type": "filename"
+    },
+    "generated": {
+      "type": "generated"
+    },
+    "json": {
+      "type": "json",
+      "include": [
+        "(^\\.arcconfig$)",
+        "(^\\.arclint$)",
+        "(\\.json$)"
+      ]
+    },
+    "merge-conflict": {
+      "type": "merge-conflict"
+    },
+    "nolint": {
+      "type": "nolint"
+    },
+    "spelling": {
+      "type": "spelling"
+    },
+    "text-without-length": {
+      "type": "text",
+      "exclude": "(^\\.gitmodules$)",
+      "severity": {
+        "3": "disabled"
+      }
+    },
+    "text-without-length-or-tabs": {
+      "type": "text",
+      "include": "(^\\.gitmodules$)",
+      "severity": {
+        "2": "disabled",
+        "3": "disabled"
+      }
+    }
+  }
+}

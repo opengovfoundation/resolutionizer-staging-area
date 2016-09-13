@@ -12,8 +12,8 @@ config :logger, level: :warn
 # Configure your database
 config :resolutionizer, Resolutionizer.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
+  username: "resolutionizer",
+  password: "resolutionizer_pass",
   database: "resolutionizer_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox

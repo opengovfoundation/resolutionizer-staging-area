@@ -36,8 +36,8 @@ config :phoenix, :stacktrace_depth, 20
 # Configure your database
 config :resolutionizer, Resolutionizer.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
+  username: "resolutionizer",
+  password: "resolutionizer_pass",
   database: "resolutionizer_dev",
   hostname: "localhost",
   pool_size: 10

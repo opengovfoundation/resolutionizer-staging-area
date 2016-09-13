@@ -1,0 +1,7 @@
+{
+  "phabricator.uri": "https://phabricator.opengovfoundation.org/",
+  "base": "git:merge-base(origin/master), arc:prompt",
+  "load": [
+    "support/arcanist/arcanist-elixir-support"
+  ]
+}
