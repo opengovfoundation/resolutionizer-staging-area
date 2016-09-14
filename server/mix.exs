@@ -36,7 +36,7 @@ defmodule Resolutionizer.Mixfile do
      {:postgrex, ">= 0.0.0"},
      {:gettext, "~> 0.11"},
      {:cowboy, "~> 1.0"},
-     {:dogma, "~> 0.1", only: :dev }]
+     {:dogma, "~> 0.1", only: [:test, :dev]}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
