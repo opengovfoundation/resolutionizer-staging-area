@@ -1,0 +1,93 @@
+body {
+    padding: 5rem;
+}
+
+.usa-button-plain {
+    border: 0;
+    margin: 0;
+    background: 0;
+    padding: 0;
+}
+
+.usa-button-plain:focus {
+    box-shadow: none;
+}
+
+.usa-button-plain:hover {
+    box-shadow: none;
+    background: 0;
+}
+
+.clause-label {
+    display: inline;
+    margin: 0;
+}
+
+.clause {
+    position: relative;
+    display: inline-block;
+}
+
+.clause textarea {
+    height: 10rem;
+    width: 46rem;
+}
+
+.add-selector {
+    overflow: auto;
+}
+
+.add-selector select {
+    float: left;
+    margin-right: 1rem;
+    width: auto;
+}
+
+.add-selector button {
+    float: left;
+}
+
+.delete {
+    display: none;
+    /* position:absolute; */
+    /* top: 0; */
+    /* right: 10px; */
+    /* bottom: 0; */
+    /* width: 40px; */
+    /* height: 40px; */
+    /* margin: auto 0; */
+    font-size: 25px;
+    color: #cc9a9a;
+    /* margin-bottom: 11px; */
+    transition: color 0.2s ease-out;
+    float: right;
+}
+
+.delete:hover {
+    color: #af5b5e;
+
+}
+
+.delete:after {
+    content: '\02df';
+
+}
+
+.clause:hover .delete {
+    display: block;
+
+}
+
+.add {
+    color: #0071bc;
+    font-size: 4.5rem;
+}
+
+.add:hover {
+    color: #205493;
+}
+
+.add:after {
+    content: '+';
+
+}
