@@ -1,10 +1,11 @@
 {
   "exclude": [
-    "(^deps/)",
-    "(^_build/)",
-    "(^node_modules/)",
-    "(^web/elm/elm-stuff/)",
-    "(^support/arcanist/arcanist-elixir-support/)"
+    "(^server/_build/)",
+    "(^server/deps/)",
+    "(^client/_build/)",
+    "(^client/elm-stuff/)",
+    "(^client/node_modules/)",
+    "(^server/support/arcanist/arcanist-elixir-support/)"
   ],
   "linters": {
     "chmod": {
@@ -12,6 +13,7 @@
     },
     "elixir": {
       "type": "elixirdogma",
+      "elixirdogma.project-root-dir": "server",
       "include": "(\\.ex[s]?$)"
     },
     "filename": {
@@ -39,14 +41,20 @@
     },
     "text-without-length": {
       "type": "text",
-      "exclude": "(^\\.gitmodules$)",
+      "exclude": [
+        "(^\\.gitmodules$)",
+        "(makefile$)"
+      ],
       "severity": {
         "3": "disabled"
       }
     },
     "text-without-length-or-tabs": {
       "type": "text",
-      "include": "(^\\.gitmodules$)",
+      "include": [
+        "(^\\.gitmodules$)",
+        "(makefile$)"
+      ],
       "severity": {
         "2": "disabled",
         "3": "disabled"

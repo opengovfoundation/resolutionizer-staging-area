@@ -1,0 +1,10 @@
+{
+  "name": "resolutionizer-client",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "uswds": "^0.12.1"
+  },
+  "devDependencies": {},
+  "license": "AGPL-3.0"
+}
