@@ -1,0 +1,32 @@
+machine:
+  environment:
+    MIX_ENV: "test"
+
+
+dependencies:
+  cache_directories:
+    - "/nix/store"
+    - "client/node_modules"
+    - "client/elm-stuff/packages"
+    - "server/deps"
+
+  override:
+    - curl https://nixos.org/nix/install | sh
+    - echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.circlerc
+    - nix-channel --add https://nixos.org/channels/nixos-unstable-small
+    - nix-channel --update
+    - nix-shell --command "cd client && make deps && make install"
+    - nix-shell --command "cd server && mix local.hex --force"
+    - nix-shell --command "cd server && mix local.rebar --force"
+    - nix-shell --command "cd server && mix deps.get"
+
+
+test:
+  override:
+    - nix-shell --command "cd client && make build"
+    - nix-shell --command "cd server && mix do compile, dogma"
+
+
+notify:
+  webhooks:
+    - url: https://phabricator.opengovfoundation.org/harbormaster/hook/circleci/
