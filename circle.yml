@@ -6,6 +6,7 @@ machine:
 dependencies:
   cache_directories:
     - "/nix/store"
+    - "~/.mix"
     - "client/node_modules"
     - "client/elm-stuff/packages"
     - "server/deps"
@@ -15,7 +16,7 @@ dependencies:
     - echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.circlerc
     - nix-channel --add https://nixos.org/channels/nixos-unstable-small
     - nix-channel --update
-    - nix-shell --command "cd client && make deps && make install"
+    - nix-shell --command "cd client && make deps"
     - nix-shell --command "cd server && mix local.hex --force"
     - nix-shell --command "cd server && mix local.rebar --force"
     - nix-shell --command "cd server && mix deps.get"

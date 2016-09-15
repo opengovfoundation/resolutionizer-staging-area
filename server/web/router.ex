@@ -1,4 +1,6 @@
 defmodule Resolutionizer.Router do
+  @moduledoc false
+
   use Resolutionizer.Web, :router
 
   pipeline :browser do

@@ -1,10 +1,12 @@
 defmodule Resolutionizer.UserSocket do
+  @moduledoc false
+
   use Phoenix.Socket
 
-  ## Channels
+  # Channels
   # channel "room:*", Resolutionizer.RoomChannel
 
-  ## Transports
+  # Transports
   transport :websocket, Phoenix.Transports.WebSocket
   # transport :longpoll, Phoenix.Transports.LongPoll
 
