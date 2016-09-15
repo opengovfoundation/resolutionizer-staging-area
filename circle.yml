@@ -15,10 +15,30 @@ dependencies:
 
   override:
     # Grab asdf and bootstrap all our languages/tools
-    - if ! asdf | grep version; then git clone https://github.com/HashNuke/asdf.git ~/.asdf; fi
-    - asdf plugin-add erlang https://github.com/HashNuke/asdf-erlang.git
-    - asdf plugin-add elixir https://github.com/HashNuke/asdf-elixir.git
-    - asdf plugin-add elm https://github.com/obmarg/asdf-elm.git
+    - |
+      if ! asdf | grep version; then
+        git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+      else
+        cd ~/.asdf && git pull
+      fi
+    - |
+      if ! asdf plugin-list | grep erlang; then
+        asdf plugin-add erlang https://github.com/asdf-erlang/asdf-erlang.git
+      else
+        asdf plugin-update erlang
+      fi
+    - |
+      if ! asdf plugin-list | grep elixir; then
+        asdf plugin-add elixir https://github.com/asdf-elixir/asdf-elixir.git
+      else
+        asdf plugin-update elixir
+      fi
+    - |
+      if ! asdf plugin-list | grep elm; then
+        asdf plugin-add elm https://github.com/obmarg/asdf-elm.git
+      else
+        asdf plugin-update elm
+      fi
     - asdf install
     - cd server && mix local.hex --force
     - cd server && mix local.rebar --force
