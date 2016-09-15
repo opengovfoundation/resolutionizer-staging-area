@@ -5,8 +5,8 @@ machine:
 
 dependencies:
   cache_directories:
-    - "/nix/store"
     - "~/.mix"
+    - "~/sysconfcpus"
     - "client/node_modules"
     - "client/elm-stuff/packages"
     - "server/deps"
@@ -20,11 +20,19 @@ dependencies:
     - nix-shell --command "cd server && mix local.hex --force"
     - nix-shell --command "cd server && mix local.rebar --force"
     - nix-shell --command "cd server && mix deps.get"
+    # Workaround for https://github.com/elm-lang/elm-compiler/issues/1473
+    - |
+      if [ ! -d $HOME/sysconfcpus/bin ]; then
+        git clone https://github.com/obmarg/libsysconfcpus.git $HOME/libsysconfcpus;
+        cd $HOME/libsysconfcpus;
+        ./configure --prefix=$HOME/sysconfcpus;
+        make && make install;
+      fi
 
 
 test:
   override:
-    - nix-shell --command "cd client && make build"
+    - nix-shell --command "cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build"
     - nix-shell --command "cd server && mix do compile, dogma"
 
 
