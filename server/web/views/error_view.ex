@@ -1,4 +1,6 @@
 defmodule Resolutionizer.ErrorView do
+  @moduledoc false
+
   use Resolutionizer.Web, :view
 
   def render("404.json", _assigns) do

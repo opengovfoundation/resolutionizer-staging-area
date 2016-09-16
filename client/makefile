@@ -20,7 +20,7 @@ install: ## Puts build files into $(DESTDIR)
 
 deps: ## Installs project dependencies
 	npm install
-	elm package install
+	elm package install --yes
 
 
 clean: clean-elm

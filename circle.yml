@@ -1,0 +1,66 @@
+machine:
+  environment:
+    MIX_ENV: "test"
+    PATH: "$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+
+
+dependencies:
+  cache_directories:
+    - "~/.asdf"
+    - "~/.mix"
+    - "~/sysconfcpus"
+    - "client/node_modules"
+    - "client/elm-stuff/packages"
+    - "server/deps"
+
+  override:
+    # Grab asdf and bootstrap all our languages/tools
+    - |
+      if ! asdf | grep version; then
+        git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+      else
+        cd ~/.asdf && git pull
+      fi
+    - |
+      if ! asdf plugin-list | grep erlang; then
+        asdf plugin-add erlang https://github.com/asdf-erlang/asdf-erlang.git
+      else
+        asdf plugin-update erlang
+      fi
+    - |
+      if ! asdf plugin-list | grep elixir; then
+        asdf plugin-add elixir https://github.com/asdf-elixir/asdf-elixir.git
+      else
+        asdf plugin-update elixir
+      fi
+    - |
+      if ! asdf plugin-list | grep elm; then
+        asdf plugin-add elm https://github.com/obmarg/asdf-elm.git
+      else
+        asdf plugin-update elm
+      fi
+    - asdf install
+    - cd server && mix local.hex --force
+    - cd server && mix local.rebar --force
+    # Install our application dependencies
+    - cd client && make deps
+    - cd server && mix do deps.get, deps.compile
+    # Workaround for https://github.com/elm-lang/elm-compiler/issues/1473
+    - |
+      if [ ! -d $HOME/sysconfcpus/bin ]; then
+        git clone https://github.com/obmarg/libsysconfcpus.git $HOME/libsysconfcpus;
+        cd $HOME/libsysconfcpus;
+        ./configure --prefix=$HOME/sysconfcpus;
+        make && make install;
+      fi
+
+
+test:
+  override:
+    - cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build
+    - cd server && mix do compile --warnings-as-errors, dogma
+
+
+notify:
+  webhooks:
+    - url: https://phabricator.opengovfoundation.org/harbormaster/hook/circleci/
