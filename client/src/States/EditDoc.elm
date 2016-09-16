@@ -1,13 +1,14 @@
-module States.EditDoc exposing (Msg, Route(..), State, route, update, init, view)
+module States.EditDoc exposing (InternalMsg, Route(..), State, stateToUrl, locationToMsgs, translator, update, init, view)
 
 import Doc.Model
 import Dict
-import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import Html.Lazy exposing (lazy, lazy2)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
+import Navigation exposing (Location)
+import RouteUrl exposing (HistoryEntry(..), UrlChange)
 
 
 type Route
@@ -21,10 +22,15 @@ type alias State =
     , selectedNewClauseType : Doc.Model.ClauseType
     , uid : Int
     , activeRoute : Route
+    , urlPrefix : String
     }
 
 
-type Msg
+type OutMsg
+    = SetUrl String
+
+
+type InternalMsg
     = SetSelectedClauseType Doc.Model.ClauseType
     | UpdateTitle String
     | NewClause
@@ -37,6 +43,31 @@ type Msg
     | NoOp
 
 
+type Msg
+    = ForSelf InternalMsg
+    | ForParent OutMsg
+
+
+type alias TranslationDictionary msg =
+    { onInternalMessage : InternalMsg -> msg
+    , onSetUrl : String -> msg
+    }
+
+
+type alias Translator parentMsg =
+    Msg -> parentMsg
+
+
+translator : TranslationDictionary parentMsg -> Translator parentMsg
+translator { onInternalMessage, onSetUrl } msg =
+    case msg of
+        ForSelf internal ->
+            onInternalMessage internal
+
+        ForParent (SetUrl url) ->
+            onSetUrl url
+
+
 init : Doc.Model.Model -> State
 init doc =
     { doc = doc
@@ -44,20 +75,37 @@ init doc =
     , selectedNewClauseType = doc.defaultClauseType
     , uid = 0
     , activeRoute = Meta
+    , urlPrefix = "/new"
     }
 
 
-route : Route -> Maybe UrlChange
-route r =
-    case r of
+stateToUrl : State -> Maybe UrlChange
+stateToUrl state =
+    case state.activeRoute of
         Meta ->
-            Just <| UrlChange NewEntry "meta"
+            Just <| UrlChange NewEntry (state.urlPrefix ++ "/meta")
 
         Clauses ->
-            Just <| UrlChange NewEntry "clauses"
+            Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses")
 
 
-update : Msg -> State -> ( State, Cmd Msg )
+locationToMsgs : String -> Location -> List Msg
+locationToMsgs urlPrefix location =
+    let
+        locationMatch urlFragment =
+            location.pathname == (urlPrefix ++ urlFragment)
+    in
+        if locationMatch "" then
+            [ ForSelf <| SetActiveRoute Meta ]
+        else if locationMatch "/meta" then
+            [ ForSelf <| SetActiveRoute Meta ]
+        else if locationMatch "/clauses" then
+            [ ForSelf <| SetActiveRoute Clauses ]
+        else
+            []
+
+
+update : InternalMsg -> State -> ( State, Cmd Msg )
 update msg state =
     case msg of
         SetSelectedClauseType clauseType ->
@@ -171,7 +219,7 @@ viewMetaRoute state =
     div []
         [ text "Enter the details of the Commemorative Resolution below"
         , viewMeta state
-        , button [ onClick (SetActiveRoute Clauses) ] [ text "Continue" ]
+        , button [ onClick (ForSelf <| SetActiveRoute Clauses) ] [ text "Continue" ]
         ]
 
 
@@ -188,7 +236,7 @@ viewMeta : State -> Html Msg
 viewMeta state =
     div []
         [ label [ for "title" ] [ text "Resolution Title" ]
-        , textarea [ id "title", value state.doc.title, onInput UpdateTitle ] []
+        , textarea [ id "title", value state.doc.title, onInput (ForSelf << UpdateTitle) ] []
         , viewSponsors state
         ]
 
@@ -199,8 +247,8 @@ viewSponsors state =
         [ legend [] [ text "Sponsors" ]
         , viewSponsorSelectors state.doc
         , div [ class "add-selector" ]
-            [ sponsorSelect state.doc state.selectedNewSponsor SetSelectedSponsor
-            , button [ class "usa-button-plain add", onClick NewSponsor ] []
+            [ sponsorSelect state.doc state.selectedNewSponsor (ForSelf << SetSelectedSponsor)
+            , button [ class "usa-button-plain add", onClick (ForSelf NewSponsor) ] []
             ]
         ]
 
@@ -208,7 +256,7 @@ viewSponsors state =
 viewSponsorSelectors : Doc.Model.Model -> Html Msg
 viewSponsorSelectors doc =
     div [] <|
-        List.map (\sponsor -> sponsorSelect doc sponsor.name (UpdateSponsor sponsor.pos)) <|
+        List.map (\sponsor -> sponsorSelect doc sponsor.name (ForSelf << UpdateSponsor sponsor.pos)) <|
             List.sortBy .pos <|
                 Dict.values <|
                     doc.sponsors
@@ -248,13 +296,13 @@ viewClause doc clause =
                 [ label [ class "clause-label", for clauseId ] [ clauseTypeFormatter doc clause.ctype ]
                 , button
                     [ class "usa-button-plain delete"
-                    , onClick (DeleteClause clause.id)
+                    , onClick (ForSelf <| DeleteClause clause.id)
                     ]
                     []
                 , Keyed.node "textarea"
                     [ id clauseId
                     , value clause.content
-                    , onInput (UpdateClause clause.id)
+                    , onInput (ForSelf << UpdateClause clause.id)
                     ]
                     []
                 ]
@@ -265,7 +313,7 @@ viewClauseTypeSelector : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
 viewClauseTypeSelector doc selectedNewClauseType =
     div [ class "add-selector" ]
         [ clauseTypeSelect doc selectedNewClauseType
-        , button [ class "usa-button-plain add", onClick NewClause ] []
+        , button [ class "usa-button-plain add", onClick (ForSelf NewClause) ] []
         ]
 
 
@@ -276,7 +324,7 @@ clauseTypeSelect doc selectedClauseType =
             (\clauseType ->
                 option
                     [ selected (clauseType == selectedClauseType)
-                    , onClick (SetSelectedClauseType clauseType)
+                    , onClick (ForSelf <| SetSelectedClauseType clauseType)
                     ]
                     [ clauseTypeFormatter doc clauseType ]
             )

@@ -1,7 +1,7 @@
 module App.Model exposing (..)
 
-import Array exposing (Array)
 import States.EditDoc
+import States.Login
 
 
 type Route
@@ -12,4 +12,5 @@ type Route
 
 type Model
     = Uninitialized
+    | Login States.Login.State
     | EditDoc States.EditDoc.State

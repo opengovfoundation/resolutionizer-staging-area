@@ -1,9 +1,10 @@
 module App.Router exposing (..)
 
 import App.Model exposing (..)
-import App.Update exposing (Msg(..))
+import App.Update exposing (Msg(..), editDocTranslator)
 import Navigation exposing (Location)
 import States.EditDoc
+import String
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 
 
@@ -13,31 +14,20 @@ delta2url previous current =
         Uninitialized ->
             Nothing
 
+        Login state ->
+            Just <| UrlChange NewEntry "/login"
+
         EditDoc state ->
-            States.EditDoc.route state.activeRoute
+            States.EditDoc.stateToUrl state
 
 
 location2messages : Location -> List Msg
 location2messages location = Debug.log ("Path: " ++ location.pathname) <|
-    -- TODO: use something better like evancz/url-parser
-    case location.pathname of
-        "" ->
-            []
-
-        "/login" ->
-            [ SetActivePage LoginR ]
-
-        "/new" ->
-            [ SetActivePage (EditDocR States.EditDoc.Meta) ]
-
-        -- TODO: stuff these away inside States.EditDoc somehow?
-        -- And they should ideally all be prefixed with /new/, how to pass that
-        -- fact along as well?
-        "/meta" ->
-            [ SetActivePage (EditDocR States.EditDoc.Meta) ]
-
-        "/clauses" ->
-            [ SetActivePage (EditDocR States.EditDoc.Clauses) ]
-
-        _ ->
-            [ SetActivePage PageNotFoundR ]
+    if String.isEmpty location.pathname then
+        []
+    else if String.startsWith "/login" location.pathname then
+        [ SetActivePage LoginR ]
+    else if String.startsWith "/new" location.pathname then
+        List.map editDocTranslator <| States.EditDoc.locationToMsgs "/new" location
+    else
+        [ SetActivePage PageNotFoundR ]

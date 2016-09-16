@@ -3,14 +3,37 @@ module App.Update exposing (..)
 import App.Model exposing (..)
 import Doc.Model
 import States.EditDoc
+import States.Login
 import Task
 
 
 type Msg
     = Init Int
     | NoOp
-    | EditDocM States.EditDoc.Msg
+    | LoginMsg States.Login.InternalMsg
+    | EditDocMsg States.EditDoc.InternalMsg
     | SetActivePage Route
+    | LoggedIn
+
+
+loginTranslationDictionary =
+    { onInternalMessage = LoginMsg
+    , onLoggedIn = LoggedIn
+    }
+
+
+loginTranslator =
+    States.Login.translator loginTranslationDictionary
+
+
+editDocTranslationDictionary =
+    { onInternalMessage = EditDocMsg
+    , onSetUrl = always NoOp
+    }
+
+
+editDocTranslator =
+    States.EditDoc.translator editDocTranslationDictionary
 
 
 init : ( Model, Cmd Msg )
@@ -24,6 +47,17 @@ update msg model =
         Uninitialized ->
             case msg of
                 Init _ ->
+                    ( Login States.Login.init, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Login state ->
+            case msg of
+                LoginMsg msg' ->
+                    mapEach Login (Cmd.map loginTranslator) <| States.Login.update msg' state
+
+                LoggedIn ->
                     ( EditDoc (States.EditDoc.init Doc.Model.emptyDoc), Cmd.none )
 
                 _ ->
@@ -31,8 +65,8 @@ update msg model =
 
         EditDoc state ->
             case msg of
-                EditDocM msg' ->
-                    mapEach EditDoc (Cmd.map EditDocM) <| States.EditDoc.update msg' state
+                EditDocMsg msg' ->
+                    mapEach EditDoc (Cmd.map editDocTranslator) <| States.EditDoc.update msg' state
 
                 SetActivePage route ->
                     case route of

@@ -6,6 +6,7 @@ import Html.App as Html
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import States.EditDoc
+import States.Login
 
 
 view : Model -> Html Msg
@@ -13,8 +14,11 @@ view model =
     case model of
         Uninitialized ->
             div []
-                [ text "Hello world"
+                [ text "Uninitialized state..."
                 ]
 
+        Login state ->
+          Html.map loginTranslator <| States.Login.view state
+
         EditDoc state ->
-          Html.map EditDocM <| States.EditDoc.view state
+          Html.map editDocTranslator <| States.EditDoc.view state
