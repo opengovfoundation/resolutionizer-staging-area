@@ -44,7 +44,7 @@ dependencies:
     - cd server && mix local.rebar --force
     # Install our application dependencies
     - cd client && make deps
-    - cd server && mix deps.get
+    - cd server && mix do deps.get, deps.compile
     # Workaround for https://github.com/elm-lang/elm-compiler/issues/1473
     - |
       if [ ! -d $HOME/sysconfcpus/bin ]; then
@@ -58,7 +58,7 @@ dependencies:
 test:
   override:
     - cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build
-    - cd server && mix do compile, dogma
+    - cd server && mix do compile --warnings-as-errors, dogma
 
 
 notify:
