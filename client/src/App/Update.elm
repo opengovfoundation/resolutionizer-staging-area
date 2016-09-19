@@ -9,7 +9,7 @@ import Task
 
 type Msg
     = NoOp
-    | SetActivePage Route
+    | SetActiveRoute Route
     | LoggedIn
     | LoginMsg States.Login.InternalMsg
     | EditDocMsg States.EditDoc.InternalMsg
@@ -70,7 +70,7 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        SetActivePage route ->
+        SetActiveRoute route ->
             case route of
                 PageNotFoundR ->
                     ( model, Cmd.none )

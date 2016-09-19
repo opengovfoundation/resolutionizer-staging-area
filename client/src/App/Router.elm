@@ -23,8 +23,8 @@ location2messages location =
     if String.isEmpty location.pathname then
         []
     else if String.startsWith "/login" location.pathname then
-        [ SetActivePage LoginR ]
+        [ SetActiveRoute LoginR ]
     else if String.startsWith "/new" location.pathname then
-        [ SetActivePage <| Maybe.withDefault PageNotFoundR <| Maybe.map EditDocR <| States.EditDoc.locationToRoute "/new" location ]
+        [ SetActiveRoute <| Maybe.withDefault PageNotFoundR <| Maybe.map EditDocR <| States.EditDoc.locationToRoute "/new" location ]
     else
-        [ SetActivePage PageNotFoundR ]
+        [ SetActiveRoute PageNotFoundR ]
