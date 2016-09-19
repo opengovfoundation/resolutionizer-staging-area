@@ -8,12 +8,11 @@ import Task
 
 
 type Msg
-    = Init Int
-    | NoOp
-    | LoginMsg States.Login.InternalMsg
-    | EditDocMsg States.EditDoc.InternalMsg
+    = NoOp
     | SetActivePage Route
     | LoggedIn
+    | LoginMsg States.Login.InternalMsg
+    | EditDocMsg States.EditDoc.InternalMsg
 
 
 loginTranslationDictionary =
@@ -38,56 +37,66 @@ editDocTranslator =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Uninitialized, Task.perform (always (Init 0)) Init (Task.succeed 0) )
+    ( App.Model.init, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model of
-        Uninitialized ->
-            case msg of
-                Init _ ->
-                    ( Login States.Login.init, Cmd.none )
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        LoginMsg msg' ->
+            case model.activeState of
+                Login state ->
+                    let
+                        ( loginState, loginCmds ) =
+                            States.Login.update msg' state
+                    in
+                        ( { model | activeState = Login loginState }, Cmd.map loginTranslator loginCmds )
 
                 _ ->
                     ( model, Cmd.none )
 
-        Login state ->
-            case msg of
-                LoginMsg msg' ->
-                    mapEach Login (Cmd.map loginTranslator) <| States.Login.update msg' state
-
-                LoggedIn ->
-                    ( EditDoc (States.EditDoc.init Doc.Model.emptyDoc), Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        EditDoc state ->
-            case msg of
-                EditDocMsg msg' ->
-                    mapEach EditDoc (Cmd.map editDocTranslator) <| States.EditDoc.update msg' state
-
-                SetActivePage route ->
-                    case route of
-                        PageNotFoundR ->
-                            ( model, Cmd.none )
-
-                        LoginR ->
-                            ( model, Cmd.none )
-
-                        EditDocR route' ->
-                            ( EditDoc { state | activeRoute = route' }, Cmd.none )
+        EditDocMsg msg' ->
+            case model.activeState of
+                EditDoc state ->
+                    let
+                        ( editDocState, editDocCmds ) =
+                            States.EditDoc.update msg' state
+                    in
+                        ( { model | activeState = EditDoc editDocState }, Cmd.map editDocTranslator editDocCmds )
 
                 _ ->
                     ( model, Cmd.none )
 
+        SetActivePage route ->
+            case route of
+                PageNotFoundR ->
+                    ( model, Cmd.none )
 
-mapFst : (a -> x) -> ( a, b ) -> ( x, b )
-mapFst f ( a, b ) =
-    ( f a, b )
+                LoginR ->
+                    ( { model | activeState = Login (States.Login.init) }, Cmd.none )
 
+                EditDocR route' ->
+                    let
+                        -- TODO: move this stuff into the EditDoc module? Some
+                        -- routes we may be able to just go to, others we may
+                        -- want to forbid users from just jumping to them (e.g.
+                        -- filling out clauses before the details), that logic
+                        -- has to live somewhere when we implement it
+                        editDocState =
+                            case model.activeState of
+                                EditDoc state ->
+                                    state
 
-mapEach : (a -> x) -> (b -> x') -> ( a, b ) -> ( x, x' )
-mapEach f g ( a, b ) =
-    ( f a, g b )
+                                _ ->
+                                    (States.EditDoc.init Doc.Model.emptyDoc)
+
+                        newActiveState =
+                            EditDoc { editDocState | activeRoute = route' }
+                    in
+                        ( { model | activeState = newActiveState }, Cmd.none )
+
+        LoggedIn ->
+            ( { model | activeState = EditDoc (States.EditDoc.init Doc.Model.emptyDoc) }, Cmd.none )

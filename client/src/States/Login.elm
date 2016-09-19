@@ -72,20 +72,32 @@ update msg state =
                 validCredentials =
                     state.username == "hello" && state.password == "world"
             in
-                ( state, if validCredentials then Task.perform identity identity (Task.succeed (ForParent LoggedIn)) else Cmd.none )
+                ( state
+                , if validCredentials then
+                    Task.perform identity identity (Task.succeed (ForParent LoggedIn))
+                  else
+                    Cmd.none
+                )
 
 
 view : State -> Html Msg
 view state =
-    div []
-        [ Html.form [ class "usa-form", onSubmit (ForSelf TryLogin) ]
+    div [ class "login" ]
+        [ div [ class "seal center-block" ]
+            [ img [ src "/assets/img/chicago-seal.png", alt "City of Chicago Seal", class "img-responsive center-block" ] []
+            ]
+        , div [ class "text-center title" ]
+            [ h1 [] [ text "City of Chicago" ]
+            , h2 [] [ text "Commemorative Resolution Generator" ]
+            ]
+        , Html.form [ class "usa-form center-block", onSubmit (ForSelf TryLogin) ]
             [ fieldset []
-                [ legend [] [ text "Sign In" ]
+                [ legend [] [ text "Login" ]
                 , label [ for "username" ] [ text "Username" ]
                 , input [ id "username", name "username", type' "text", onInput (ForSelf << UpdateUsername) ] []
                 , label [ for "password" ] [ text "Password" ]
                 , input [ id "password", name "password", type' "password", onInput (ForSelf << UpdatePassword) ] []
-                , button [ ] [ text "Login" ]
+                , button [] [ text "Login" ]
                 ]
             ]
         ]

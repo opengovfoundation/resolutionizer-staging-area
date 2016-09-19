@@ -10,10 +10,7 @@ import RouteUrl exposing (HistoryEntry(..), UrlChange)
 
 delta2url : Model -> Model -> Maybe UrlChange
 delta2url previous current =
-    case current of
-        Uninitialized ->
-            Nothing
-
+    case current.activeState of
         Login state ->
             Just <| UrlChange NewEntry "/login"
 
@@ -22,12 +19,12 @@ delta2url previous current =
 
 
 location2messages : Location -> List Msg
-location2messages location = Debug.log ("Path: " ++ location.pathname) <|
+location2messages location =
     if String.isEmpty location.pathname then
         []
     else if String.startsWith "/login" location.pathname then
         [ SetActivePage LoginR ]
     else if String.startsWith "/new" location.pathname then
-        List.map editDocTranslator <| States.EditDoc.locationToMsgs "/new" location
+        [ SetActivePage <| Maybe.withDefault PageNotFoundR <| Maybe.map EditDocR <| States.EditDoc.locationToRoute "/new" location ]
     else
         [ SetActivePage PageNotFoundR ]

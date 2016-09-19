@@ -1,4 +1,4 @@
-module States.EditDoc exposing (InternalMsg, Route(..), State, stateToUrl, locationToMsgs, translator, update, init, view)
+module States.EditDoc exposing (InternalMsg, Route(..), State, stateToUrl, locationToRoute, translator, update, init, view)
 
 import Doc.Model
 import Dict
@@ -89,20 +89,20 @@ stateToUrl state =
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses")
 
 
-locationToMsgs : String -> Location -> List Msg
-locationToMsgs urlPrefix location =
+locationToRoute : String -> Location -> Maybe Route
+locationToRoute urlPrefix location =
     let
         locationMatch urlFragment =
             location.pathname == (urlPrefix ++ urlFragment)
     in
         if locationMatch "" then
-            [ ForSelf <| SetActiveRoute Meta ]
+            Just Meta
         else if locationMatch "/meta" then
-            [ ForSelf <| SetActiveRoute Meta ]
+            Just Meta
         else if locationMatch "/clauses" then
-            [ ForSelf <| SetActiveRoute Clauses ]
+            Just Clauses
         else
-            []
+            Nothing
 
 
 update : InternalMsg -> State -> ( State, Cmd Msg )

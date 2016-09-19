@@ -10,7 +10,16 @@ type Route
     | EditDocR States.EditDoc.Route
 
 
-type Model
-    = Uninitialized
-    | Login States.Login.State
+type alias Model =
+    { activeState : State
+    }
+
+
+type State
+    = Login States.Login.State
     | EditDoc States.EditDoc.State
+
+
+init : Model
+init =
+    { activeState = Login States.Login.init }

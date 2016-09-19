@@ -11,12 +11,7 @@ import States.Login
 
 view : Model -> Html Msg
 view model =
-    case model of
-        Uninitialized ->
-            div []
-                [ text "Uninitialized state..."
-                ]
-
+    case model.activeState of
         Login state ->
           Html.map loginTranslator <| States.Login.view state
 
