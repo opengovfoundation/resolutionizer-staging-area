@@ -71,32 +71,44 @@ update msg model =
                     ( model, Cmd.none )
 
         SetActiveRoute route ->
-            case route of
-                PageNotFoundR ->
-                    ( model, Cmd.none )
+            if not model.isLoggedIn then
+                ( { model | activeState = Login (States.Login.init) }, Cmd.none )
+            else
+                case route of
+                    PageNotFoundR ->
+                        ( { model | activeState = PageNotFound }, Cmd.none )
 
-                LoginR ->
-                    ( { model | activeState = Login (States.Login.init) }, Cmd.none )
+                    LoginR ->
+                        ( { model | activeState = Login (States.Login.init) }, Cmd.none )
 
-                EditDocR route' ->
-                    let
-                        -- TODO: move this stuff into the EditDoc module? Some
-                        -- routes we may be able to just go to, others we may
-                        -- want to forbid users from just jumping to them (e.g.
-                        -- filling out clauses before the details), that logic
-                        -- has to live somewhere when we implement it
-                        editDocState =
-                            case model.activeState of
-                                EditDoc state ->
-                                    state
+                    EditDocR route' ->
+                        let
+                            -- TODO: move this stuff into the EditDoc module? Some
+                            -- routes we may be able to just go to, others we may
+                            -- want to forbid users from just jumping to them (e.g.
+                            -- filling out clauses before the details), that logic
+                            -- has to live somewhere when we implement it
+                            editDocState =
+                                case model.activeState of
+                                    EditDoc state ->
+                                        state
 
-                                _ ->
-                                    (States.EditDoc.init Doc.Model.emptyDoc)
+                                    _ ->
+                                        (States.EditDoc.init Doc.Model.emptyDoc)
 
-                        newActiveState =
-                            EditDoc { editDocState | activeRoute = route' }
-                    in
-                        ( { model | activeState = newActiveState }, Cmd.none )
+                            newActiveState =
+                                EditDoc { editDocState | activeRoute = route' }
+                        in
+                            ( { model | activeState = newActiveState }, Cmd.none )
 
         LoggedIn ->
-            ( { model | activeState = EditDoc (States.EditDoc.init Doc.Model.emptyDoc) }, Cmd.none )
+            ( { model
+                | activeState =
+                    EditDoc
+                        (States.EditDoc.init
+                            Doc.Model.emptyDoc
+                        )
+                , isLoggedIn = True
+              }
+            , Cmd.none
+            )

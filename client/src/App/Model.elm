@@ -12,6 +12,7 @@ type Route
 
 type alias Model =
     { activeState : State
+    , isLoggedIn : Bool
     }
 
 
@@ -22,4 +23,6 @@ type State
 
 init : Model
 init =
-    { activeState = Login States.Login.init }
+    { activeState = Login States.Login.init
+    , isLoggedIn = False
+    }
