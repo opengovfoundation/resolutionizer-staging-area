@@ -19,6 +19,7 @@ type alias Model =
 type State
     = Login States.Login.State
     | EditDoc States.EditDoc.State
+    | PageNotFound
 
 
 init : Model

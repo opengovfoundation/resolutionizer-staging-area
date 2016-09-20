@@ -17,6 +17,9 @@ delta2url previous current =
         EditDoc state ->
             States.EditDoc.stateToUrl state
 
+        PageNotFound ->
+            Nothing
+
 
 location2messages : Location -> List Msg
 location2messages location =
