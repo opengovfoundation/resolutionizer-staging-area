@@ -1,7 +1,7 @@
 module App.Router exposing (..)
 
 import App.Model exposing (..)
-import App.Update exposing (Msg(..), editDocTranslator)
+import App.Update exposing (Msg(..))
 import Navigation exposing (Location)
 import States.EditDoc
 import String

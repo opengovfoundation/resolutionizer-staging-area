@@ -12,7 +12,7 @@ type Msg
     | SetActiveRoute Route
     | LoggedIn
     | LoginMsg States.Login.InternalMsg
-    | EditDocMsg States.EditDoc.InternalMsg
+    | EditDocMsg States.EditDoc.Msg
 
 
 loginTranslationDictionary =
@@ -23,16 +23,6 @@ loginTranslationDictionary =
 
 loginTranslator =
     States.Login.translator loginTranslationDictionary
-
-
-editDocTranslationDictionary =
-    { onInternalMessage = EditDocMsg
-    , onSetUrl = always NoOp
-    }
-
-
-editDocTranslator =
-    States.EditDoc.translator editDocTranslationDictionary
 
 
 init : ( Model, Cmd Msg )
@@ -65,7 +55,7 @@ update msg model =
                         ( editDocState, editDocCmds ) =
                             States.EditDoc.update msg' state
                     in
-                        ( { model | activeState = EditDoc editDocState }, Cmd.map editDocTranslator editDocCmds )
+                        ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmds )
 
                 _ ->
                     ( model, Cmd.none )

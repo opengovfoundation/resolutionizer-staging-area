@@ -1,4 +1,4 @@
-module States.EditDoc exposing (InternalMsg, Route(..), State, stateToUrl, locationToRoute, translator, update, init, view)
+module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
 import Doc.Model
 import Dict
@@ -26,11 +26,7 @@ type alias State =
     }
 
 
-type OutMsg
-    = SetUrl String
-
-
-type InternalMsg
+type Msg
     = SetSelectedClauseType Doc.Model.ClauseType
     | UpdateTitle String
     | NewClause
@@ -41,31 +37,6 @@ type InternalMsg
     | UpdateSponsor Int String
     | SetSelectedSponsor String
     | NoOp
-
-
-type Msg
-    = ForSelf InternalMsg
-    | ForParent OutMsg
-
-
-type alias TranslationDictionary msg =
-    { onInternalMessage : InternalMsg -> msg
-    , onSetUrl : String -> msg
-    }
-
-
-type alias Translator parentMsg =
-    Msg -> parentMsg
-
-
-translator : TranslationDictionary parentMsg -> Translator parentMsg
-translator { onInternalMessage, onSetUrl } msg =
-    case msg of
-        ForSelf internal ->
-            onInternalMessage internal
-
-        ForParent (SetUrl url) ->
-            onSetUrl url
 
 
 init : Doc.Model.Model -> State
@@ -105,7 +76,7 @@ locationToRoute urlPrefix location =
             Nothing
 
 
-update : InternalMsg -> State -> ( State, Cmd Msg )
+update : Msg -> State -> ( State, Cmd Msg )
 update msg state =
     case msg of
         SetSelectedClauseType clauseType ->
@@ -219,7 +190,7 @@ viewMetaRoute state =
     div []
         [ text "Enter the details of the Commemorative Resolution below"
         , viewMeta state
-        , button [ onClick (ForSelf <| SetActiveRoute Clauses) ] [ text "Continue" ]
+        , button [ onClick (SetActiveRoute Clauses) ] [ text "Continue" ]
         ]
 
 
@@ -236,7 +207,7 @@ viewMeta : State -> Html Msg
 viewMeta state =
     div []
         [ label [ for "title" ] [ text "Resolution Title" ]
-        , textarea [ id "title", value state.doc.title, onInput (ForSelf << UpdateTitle) ] []
+        , textarea [ id "title", value state.doc.title, onInput (UpdateTitle) ] []
         , viewSponsors state
         ]
 
@@ -247,8 +218,8 @@ viewSponsors state =
         [ legend [] [ text "Sponsors" ]
         , viewSponsorSelectors state.doc
         , div [ class "add-selector" ]
-            [ sponsorSelect state.doc state.selectedNewSponsor (ForSelf << SetSelectedSponsor)
-            , button [ class "usa-button-plain add", onClick (ForSelf NewSponsor) ] []
+            [ sponsorSelect state.doc state.selectedNewSponsor (SetSelectedSponsor)
+            , button [ class "usa-button-plain add", onClick (NewSponsor) ] []
             ]
         ]
 
@@ -256,7 +227,7 @@ viewSponsors state =
 viewSponsorSelectors : Doc.Model.Model -> Html Msg
 viewSponsorSelectors doc =
     div [] <|
-        List.map (\sponsor -> sponsorSelect doc sponsor.name (ForSelf << UpdateSponsor sponsor.pos)) <|
+        List.map (\sponsor -> sponsorSelect doc sponsor.name (UpdateSponsor sponsor.pos)) <|
             List.sortBy .pos <|
                 Dict.values <|
                     doc.sponsors
@@ -296,13 +267,13 @@ viewClause doc clause =
                 [ label [ class "clause-label", for clauseId ] [ clauseTypeFormatter doc clause.ctype ]
                 , button
                     [ class "usa-button-plain delete"
-                    , onClick (ForSelf <| DeleteClause clause.id)
+                    , onClick (DeleteClause clause.id)
                     ]
                     []
                 , Keyed.node "textarea"
                     [ id clauseId
                     , value clause.content
-                    , onInput (ForSelf << UpdateClause clause.id)
+                    , onInput (UpdateClause clause.id)
                     ]
                     []
                 ]
@@ -313,7 +284,7 @@ viewClauseTypeSelector : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
 viewClauseTypeSelector doc selectedNewClauseType =
     div [ class "add-selector" ]
         [ clauseTypeSelect doc selectedNewClauseType
-        , button [ class "usa-button-plain add", onClick (ForSelf NewClause) ] []
+        , button [ class "usa-button-plain add", onClick (NewClause) ] []
         ]
 
 
@@ -324,7 +295,7 @@ clauseTypeSelect doc selectedClauseType =
             (\clauseType ->
                 option
                     [ selected (clauseType == selectedClauseType)
-                    , onClick (ForSelf <| SetSelectedClauseType clauseType)
+                    , onClick (SetSelectedClauseType clauseType)
                     ]
                     [ clauseTypeFormatter doc clauseType ]
             )

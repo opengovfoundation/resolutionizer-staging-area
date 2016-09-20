@@ -16,4 +16,4 @@ view model =
           Html.map loginTranslator <| States.Login.view state
 
         EditDoc state ->
-          Html.map editDocTranslator <| States.EditDoc.view state
+            Html.map EditDocMsg <| States.EditDoc.view state
