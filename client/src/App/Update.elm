@@ -80,10 +80,10 @@ update msg model =
                             -- want to forbid users from just jumping to them (e.g.
                             -- filling out clauses before the details), that logic
                             -- has to live somewhere when we implement it
-                            editDocState =
+                            ( editDocState, editDocCmd ) =
                                 case model.activeState of
                                     EditDoc state ->
-                                        state
+                                        ( state, Cmd.none )
 
                                     _ ->
                                         (States.EditDoc.init Doc.Model.emptyDoc)
@@ -91,16 +91,16 @@ update msg model =
                             newActiveState =
                                 EditDoc { editDocState | activeRoute = route' }
                         in
-                            ( { model | activeState = newActiveState }, Cmd.none )
+                            ( { model | activeState = newActiveState }, Cmd.map EditDocMsg editDocCmd )
 
         LoggedIn ->
-            ( { model
-                | activeState =
-                    EditDoc
-                        (States.EditDoc.init
-                            Doc.Model.emptyDoc
-                        )
-                , isLoggedIn = True
-              }
-            , Cmd.none
-            )
+            let
+                ( editDocState, editDocCmd ) =
+                    (States.EditDoc.init Doc.Model.emptyDoc)
+            in
+                ( { model
+                    | activeState = EditDoc editDocState
+                    , isLoggedIn = True
+                  }
+                , Cmd.map EditDocMsg editDocCmd
+                )

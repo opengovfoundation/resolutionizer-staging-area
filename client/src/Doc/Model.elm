@@ -1,10 +1,12 @@
 module Doc.Model exposing (Model, Clause, ClauseInfo, ClauseType, emptyDoc, newClause, newSponsor)
 
+import Date exposing (Date)
 import Dict exposing (Dict)
 
 
 type alias Model =
     { title : String
+    , meetingDate : Maybe Date
     , sponsors : Dict Int Sponsor
     , clauses : Dict Int Clause
     , validSponsors : List String
@@ -43,6 +45,7 @@ type alias ClauseTypeDesc =
 emptyDoc : Model
 emptyDoc =
     { title = ""
+    , meetingDate = Nothing
     , sponsors = Dict.empty
     , clauses = Dict.empty
     , validSponsors = chicagoSponsors
