@@ -79,10 +79,23 @@ view model =
             div [] []
 
         Running state ->
-            DateSelectorDropdown.view
+            DateSelectorDropdown.viewWithButton
+                viewDateSelectorInput
                 Toggle
                 Select
                 state.dropdownOpen
                 state.minimumDate
                 state.maximumDate
                 state.selected
+
+
+viewDateSelectorInput : Bool -> Maybe Date -> Html Msg
+viewDateSelectorInput isOpen selected =
+    input
+        [ value (selected |> Maybe.map (Date.toFormattedString "MM/dd/yyyy") |> Maybe.withDefault "")
+        , name "meeting-date"
+        , readonly True
+        , autocomplete False
+        , onClick Toggle
+        ]
+        []
