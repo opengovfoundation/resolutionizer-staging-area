@@ -1,6 +1,5 @@
 module Doc.Model exposing (Model, Clause, ClauseInfo, ClauseType, emptyDoc, newClause, newSponsor)
 
-import Array exposing (Array)
 import Dict exposing (Dict)
 
 

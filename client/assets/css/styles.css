@@ -2,6 +2,12 @@ body {
     padding: 5rem;
 }
 
+/* Undo USWDS styling */
+legend {
+    font-size: 1.7rem;
+    font-weight: 500;
+}
+
 .usa-button-plain {
     border: 0;
     margin: 0;
@@ -69,7 +75,7 @@ body {
 }
 
 .delete:after {
-    content: '\02df';
+    content: '\00d7';
 
 }
 
@@ -90,4 +96,56 @@ body {
 .add:after {
     content: '+';
 
+}
+
+.login {
+    max-width: 50rem;
+    margin: 0 auto;
+}
+
+.login form button {
+    float: right;
+    margin-right: 0;
+}
+
+.login form legend {
+    display: none;
+}
+
+.login .seal {
+    max-width: 20rem;
+}
+
+.login .title {
+    margin-top: 1.8rem;
+}
+
+.login .title h1, .login .title h2 {
+    font-size: 1.7rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.form-horizontal label {
+    margin-top: 0;
+}
+
+.img-responsive {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.center-block {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.pull-right {
+    float: right;
 }
