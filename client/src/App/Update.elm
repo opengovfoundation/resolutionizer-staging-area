@@ -4,8 +4,6 @@ import App.Model exposing (..)
 import Doc.Model
 import States.EditDoc
 import States.Login
-import States.PageNotFound
-import Task
 
 
 type Msg
@@ -16,12 +14,15 @@ type Msg
     | EditDocMsg States.EditDoc.Msg
 
 
+loginTranslationDictionary :
+      { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
 loginTranslationDictionary =
     { onInternalMessage = LoginMsg
     , onLoggedIn = LoggedIn
     }
 
 
+loginTranslator : States.Login.Translator Msg
 loginTranslator =
     States.Login.translator loginTranslationDictionary
 
