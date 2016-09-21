@@ -57,7 +57,8 @@ dependencies:
 
 test:
   override:
-    - cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build
+    # The `| tee ...` bit is to error out if the build produces warnings
+    - cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build 2>&1 | tee /dev/tty | grep '===='; test $? -ne 0
     - cd server && mix do compile --warnings-as-errors, dogma
 
 
