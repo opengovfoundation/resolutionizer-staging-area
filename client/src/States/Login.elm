@@ -9,6 +9,7 @@ import Task
 type alias State =
     { username : String
     , password : String
+    , error : Bool
     }
 
 
@@ -52,6 +53,7 @@ init : State
 init =
     { username = ""
     , password = ""
+    , error = False
     }
 
 
@@ -72,7 +74,7 @@ update msg state =
                 validCredentials =
                     state.username == "hello" && state.password == "world"
             in
-                ( state
+                ( { state | error = not validCredentials }
                 , if validCredentials then
                     Task.perform identity identity (Task.succeed (ForParent LoggedIn))
                   else
@@ -90,6 +92,18 @@ view state =
             [ h1 [] [ text "City of Chicago" ]
             , h2 [] [ text "Commemorative Resolution Generator" ]
             ]
+        , div []
+            (if state.error then
+                [ div [ class "usa-alert usa-alert-error" ]
+                    [ div [ class "usa-alert-body" ]
+                        [ div [ class "usa-alert-heading" ] [ text "Login Error" ]
+                        , div [ class "usa-alert-text" ] [ text "Username and/or password is incorrect." ]
+                        ]
+                    ]
+                ]
+             else
+                []
+            )
         , Html.form [ class "usa-form center-block", onSubmit (ForSelf TryLogin) ]
             [ fieldset []
                 [ legend [] [ text "Login" ]
