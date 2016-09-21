@@ -170,7 +170,7 @@ update msg state =
 
 view : State -> Html Msg
 view state =
-    div []
+    div [ class "usa-grid-full" ]
         [ viewRoute state
         ]
 
@@ -188,9 +188,9 @@ viewRoute state =
 viewMetaRoute : State -> Html Msg
 viewMetaRoute state =
     div []
-        [ text "Enter the details of the Commemorative Resolution below"
+        [ p [] [ text "Enter the details of the Commemorative Resolution below" ]
         , viewMeta state
-        , button [ onClick (SetActiveRoute Clauses) ] [ text "Continue" ]
+        , button [ onClick (SetActiveRoute Clauses), class "pull-right" ] [ text "Continue" ]
         ]
 
 
@@ -205,21 +205,25 @@ viewClauseRoute state =
 
 viewMeta : State -> Html Msg
 viewMeta state =
-    div []
-        [ label [ for "title" ] [ text "Resolution Title" ]
-        , textarea [ id "title", value state.doc.title, onInput (UpdateTitle) ] []
+    div [ class "form-horizontal" ]
+        [ div [ class "usa-grid-full" ]
+            [ label [ for "title", class "usa-width-one-sixth" ] [ text "Resolution Title" ]
+            , textarea [ id "title", value state.doc.title, onInput (UpdateTitle), class "usa-width-five-sixths" ] []
+            ]
         , viewSponsors state
         ]
 
 
 viewSponsors : State -> Html Msg
 viewSponsors state =
-    fieldset []
-        [ legend [] [ text "Sponsors" ]
-        , viewSponsorSelectors state.doc
-        , div [ class "add-selector" ]
-            [ sponsorSelect state.doc state.selectedNewSponsor (SetSelectedSponsor)
-            , button [ class "usa-button-plain add", onClick (NewSponsor) ] []
+    fieldset [ class "usa-grid-full" ]
+        [ legend [ class "usa-width-one-sixth" ] [ text "Sponsors" ]
+        , div [ class "usa-width-five-sixths" ]
+            [ viewSponsorSelectors state.doc
+            , div [ class "add-selector" ]
+                [ sponsorSelect state.doc state.selectedNewSponsor (SetSelectedSponsor)
+                , button [ class "usa-button-plain add", onClick (NewSponsor) ] []
+                ]
             ]
         ]
 

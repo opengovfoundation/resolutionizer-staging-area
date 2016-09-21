@@ -2,6 +2,12 @@ body {
     padding: 5rem;
 }
 
+/* Undo USWDS styling */
+legend {
+    font-size: 1.7rem;
+    font-weight: 500;
+}
+
 .usa-button-plain {
     border: 0;
     margin: 0;
@@ -120,6 +126,10 @@ body {
     margin: 0;
 }
 
+.form-horizontal label {
+    margin-top: 0;
+}
+
 .img-responsive {
     max-width: 100%;
     height: auto;
@@ -134,4 +144,8 @@ body {
 
 .text-center {
     text-align: center;
+}
+
+.pull-right {
+    float: right;
 }
