@@ -53,7 +53,7 @@ init doc =
           , dateSelector = dateSelectorModel
           , selectedNewSponsor = ""
           , selectedNewClauseType = doc.defaultClauseType
-          , uid = 0
+          , uid = Dict.size doc.clauses + Dict.size doc.sponsors
           , activeRoute = Meta
           , urlPrefix = "/new"
           }
