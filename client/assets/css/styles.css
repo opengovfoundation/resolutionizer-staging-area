@@ -89,7 +89,8 @@ legend {
     font-size: 4.5rem;
 }
 
-.add:hover {
+.add:hover,
+.add:focus {
     color: #205493;
 }
 
