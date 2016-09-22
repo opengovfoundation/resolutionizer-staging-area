@@ -49,7 +49,7 @@ emptyDoc =
     , sponsors = Dict.empty
     , clauses =
         Dict.fromList <|
-            List.indexedMap (\idx ctype -> ( idx, newClause idx idx ctype "" ))
+            List.indexedMap (\idx ctype -> ( idx, newClause idx (idx + 1) ctype "" ))
                 [ "Whereas"
                 , "Whereas"
                 , "Whereas"
