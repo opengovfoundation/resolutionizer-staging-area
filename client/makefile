@@ -1,4 +1,4 @@
-.PHONY: build clean clean-elm deps distclean install
+.PHONY: build check-elm clean clean-elm deps distclean install
 .SECONDEXPANSION:
 .DEFAULT_GOAL := help
 
@@ -37,9 +37,13 @@ distclean: ## Deletes all non-source code stuff
 	rm -r elm-stuff node_modules
 
 
+check-elm: clean-elm $(BUILDDIR)/elm.js
+check-elm: ## Rebuilds application for warnings
+
+
 ELM_FILES := $(shell find src/ -type f -name '*.elm')
 $(BUILDDIR)/elm.js: $(ELM_FILES) | $$(@D)/.
-	elm make src/Main.elm --output $@
+	elm make --warn src/Main.elm --output $@
 
 
 $(BUILDDIR)/index.html: index.html | $$(@D)/.
