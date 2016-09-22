@@ -4,7 +4,6 @@ import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
 import DateSelectorDropdown
 import Html exposing (..)
-import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Task
