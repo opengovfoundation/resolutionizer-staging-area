@@ -44,7 +44,7 @@ initRunning now =
             { dropdownOpen = False
             , now = now
             , minimumDate = today
-            , maximumDate = Date.add Week 2 today
+            , maximumDate = Date.add Year 1 today
             , selected = Just today
             }
 
