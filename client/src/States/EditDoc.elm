@@ -1,9 +1,11 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
 import Doc.Model
+import Inputs.DateSelector
 import Dict
 import Html.Lazy exposing (lazy, lazy2)
 import Html exposing (..)
+import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
@@ -18,6 +20,7 @@ type Route
 
 type alias State =
     { doc : Doc.Model.Model
+    , dateSelector : Inputs.DateSelector.Model
     , selectedNewSponsor : String
     , selectedNewClauseType : Doc.Model.ClauseType
     , uid : Int
@@ -36,18 +39,26 @@ type Msg
     | NewSponsor
     | UpdateSponsor Int String
     | SetSelectedSponsor String
+    | DateSelectorMsg Inputs.DateSelector.Msg
     | NoOp
 
 
-init : Doc.Model.Model -> State
+init : Doc.Model.Model -> ( State, Cmd Msg )
 init doc =
-    { doc = doc
-    , selectedNewSponsor = ""
-    , selectedNewClauseType = doc.defaultClauseType
-    , uid = 0
-    , activeRoute = Meta
-    , urlPrefix = "/new"
-    }
+    let
+        ( dateSelectorModel, dateSelectorCmd ) =
+            Inputs.DateSelector.init
+    in
+        ( { doc = doc
+          , dateSelector = dateSelectorModel
+          , selectedNewSponsor = ""
+          , selectedNewClauseType = doc.defaultClauseType
+          , uid = 0
+          , activeRoute = Meta
+          , urlPrefix = "/new"
+          }
+        , Cmd.map DateSelectorMsg dateSelectorCmd
+        )
 
 
 stateToUrl : State -> Maybe UrlChange
@@ -164,6 +175,19 @@ update msg state =
             in
                 ( { state | doc = newDoc }, Cmd.none )
 
+        DateSelectorMsg msg' ->
+            let
+                ( dateSelectorModel, dateSelectorCmd, mSelectedDate ) =
+                    Inputs.DateSelector.update msg' state.dateSelector
+
+                doc =
+                    state.doc
+
+                newDoc =
+                    { doc | meetingDate = mSelectedDate }
+            in
+                ( { state | doc = newDoc, dateSelector = dateSelectorModel }, Cmd.map DateSelectorMsg dateSelectorCmd )
+
         NoOp ->
             ( state, Cmd.none )
 
@@ -209,6 +233,10 @@ viewMeta state =
         [ div [ class "usa-grid-full" ]
             [ label [ for "title", class "usa-width-one-sixth" ] [ text "Resolution Title" ]
             , textarea [ id "title", value state.doc.title, onInput (UpdateTitle), class "usa-width-five-sixths" ] []
+            ]
+        , div []
+            [ label [ for "meeting-date", class "usa-width-one-sixth" ] [ text "Meeting Date" ]
+            , Html.map DateSelectorMsg <| Inputs.DateSelector.view state.dateSelector
             ]
         , viewSponsors state
         ]
