@@ -47,7 +47,13 @@ emptyDoc =
     { title = ""
     , meetingDate = Nothing
     , sponsors = Dict.empty
-    , clauses = Dict.empty
+    , clauses =
+        Dict.fromList <|
+            List.indexedMap (\idx ctype -> ( idx, newClause idx (idx + 1) ctype "" ))
+                [ "Whereas"
+                , "Whereas"
+                , "Whereas"
+                ]
     , validSponsors = chicagoSponsors
     , validClauseTypes =
         Dict.fromList
