@@ -1,18 +1,17 @@
-defmodule PDF.Config do
+defmodule Resolutionizer.PDF.Config do
+  alias Resolutionizer.PDF
+
   defstruct(
     # Location of template files for lookup
     base_path: "#{__DIR__}/templates/",
 
-    # Provided name of template file, without the `.html.eex`
+    # Provided name of template
     template_name: "",
 
+    # Actual template object
+    template: %PDF.Template{},
+
     # Data that will be passed to the template for compilation
-    data: %{},
-
-    # Location of HTML result file to be passed to wkhtmltopdf
-    html_result: "",
-
-    # Location of resulting PDF file from wkhtmltopdf
-    pdf_result: ""
+    data: %{}
   )
 end
