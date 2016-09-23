@@ -7,6 +7,7 @@ defmodule Resolutionizer.PDFTest do
 
   import Resolutionizer.PDF.Config
   import Resolutionizer.PDF.Template.Test
+  import Resolutionizer.PDF.Template.TestMissingFile
 
   doctest PDF
 
@@ -24,7 +25,7 @@ defmodule Resolutionizer.PDFTest do
     default_config = PDF.start
     assert default_config.base_path
     assert default_config.template == %PDF.Template{}
-    assert default_config.data == %{}
+    assert default_config.data == []
   end
 
   # PDF.start/1
@@ -58,7 +59,7 @@ defmodule Resolutionizer.PDFTest do
   test """
   setting data to config object works
   """ do
-    data = %{ test_field_1: "dat", test_field_2: "moar data" }
+    data = [ test_field_1: "dat", test_field_2: "moar data" ]
 
     config = PDF.start
     |> PDF.template("Test")
@@ -66,5 +67,59 @@ defmodule Resolutionizer.PDFTest do
 
     assert config.data == data
   end
+
+  # PDF.generate/1
+
+  test """
+  catches error: template not found
+  """ do
+    result = PDF.start
+    |> PDF.template("NotARealTemplate")
+    |> PDF.data([])
+    |> PDF.generate
+
+    assert result == {:error, "Template not found"}
+  end
+
+  test """
+  catches error: template file missing
+  """ do
+    result = PDF.start
+    |> PDF.template("TestMissingFile")
+    |> PDF.data([])
+    |> PDF.generate
+
+    assert result == {:error, "Template file missing"}
+  end
+
+  test """
+  catches error: missing data fields
+  """ do
+    result = PDF.start
+    |> PDF.template("Test")
+    |> PDF.data([test_field_1: "data"])
+    |> PDF.generate
+
+    assert result == {:error, "Missing data fields: test_field_2"}
+  end
+
+  test """
+  catches error: EEx.SyntaxError
+  """ do
+    result = PDF.start
+    |> PDF.template("TestBadTemplate")
+    |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+    |> PDF.generate
+
+    assert result == {:error, "EEx.SyntaxError: missing token '%>'"}
+  end
+
+  #test """
+  #catches error: wkhtmltopdf error
+  #"""
+
+  #test """
+  #returns %PDF.Result{} with valid file size and path
+  #"""
 
 end

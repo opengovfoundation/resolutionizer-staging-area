@@ -1,7 +1,7 @@
 defmodule Resolutionizer.PDF do
   alias Resolutionizer.PDF.Config
+  alias Resolutionizer.PDF.Template
   #alias Resolutionizer.PDF.Result
-  #alias Resolutionizer.PDF.Template
 
   @moduledoc """
   A module for generating PDFs using the wkhtmltopdf command line tool.
@@ -36,36 +36,52 @@ defmodule Resolutionizer.PDF do
   Set the data to be used in the `.html.eex` template
   """
 
-  def data(%Config{}=config, %{}=data) do
+  def data(%Config{}=config, data) do
     struct(config, [data: data])
   end
 
-  #@doc """
-  #Take a `%PDF.Config{}` and generates the resulting `%PDF.Result{}`
+  @doc """
+  Take a `%PDF.Config{}` and generates the resulting `%PDF.Result{}`
   
-  #Returns a result object of either `{:error, reason}` or `{:ok, %PDF.Result{}}`
-  #"""
+  Returns a result object of either `{:error, reason}` or `{:ok, %PDF.Result{}}`
+  """
 
-  #def generate(%Config{}=config) do
-  #  with {:ok, loaded_config} <- load_template(config),
-  #       {:ok, html_path} <- compile_html(loaded_config),
-  #       {:ok, pdf_result} <- generate_pdf(loaded_config, html_path),
-  #  do: {:ok, pdf_result}
-  #end
+  def generate(%Config{}=config) do
+    with {:ok, loaded_config} <- load_template(config),
+         :ok <- check_template(loaded_config),
+         {:ok, html_path} <- compile_html(loaded_config),
+         #{:ok, pdf_result} <- generate_pdf(loaded_config, html_path),
+    #do: {:ok, pdf_result}
+    do: :ok
+  end
 
-  #defp load_template(config) do
-  #  case Template.get(config.template_name) do
-  #    {:ok, template} -> struct(config, [template: template])
-  #    error -> error
-  #  end
-  #end
+  defp load_template(config) do
+    case Template.get(config.template_name) do
+      {:ok, template} -> {:ok, struct(config, [template: template])}
+      error -> error
+    end
+  end
 
-  #defp compile_html(config) do
-  #  template_file = "#{config.base_path}/#{config.template.file}"
-  #  compiled_html = EEx.eval_file template_file, config.data
-  #  # TODO: write compiled html to a file in `System.tmp_dir`
-  #  # TODO: return path to compiled html file
-  #end
+  defp check_template(config) do
+    with :ok <- Template.check_template_file(config.base_path, config.template.file),
+         :ok <- Template.check_data(config.template.fields, config.data),
+    do: :ok
+  end
+
+  defp compile_html(config) do
+    template_file = "#{config.base_path}/#{config.template.file}"
+    file_base = String.replace(config.template.file, ".html.eex", "")
+    output_file = "#{config.tmp_dir}/#{file_base}_#{System.system_time}.pdf"
+
+    try do
+      File.mkdir_p! config.tmp_dir
+      result = EEx.eval_file template_file, config.data
+      File.write! output_file, result
+      output_file
+    rescue
+      e in EEx.SyntaxError -> {:error, "EEx.SyntaxError: #{e.message}"}
+    end
+  end
 
   #defp generate_pdf(html_path, wk_opts) do
   #  # TODO: take wk_opts and html_path and run wkhtmltopdf, return a

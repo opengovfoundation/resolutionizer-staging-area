@@ -12,6 +12,9 @@ defmodule Resolutionizer.PDF.Config do
     template: %PDF.Template{},
 
     # Data that will be passed to the template for compilation
-    data: %{}
+    data: [],
+
+    # Temp directory where generated files will be stored
+    tmp_dir: "#{System.tmp_dir}/resolutionizer_pdfs"
   )
 end

@@ -22,17 +22,37 @@ defmodule Resolutionizer.PDF.TemplateTest do
   # PDF.Template.check_data/2
 
   test "returns success result if data map has all required fields" do
-    assert PDF.Template.check_data(%PDF.Template.Test{}, %{
+    assert PDF.Template.check_data([:test_field_1, :test_field_2], [
       test_field_1: "data",
       test_field_2: "moar data"
-    }) == :ok
+    ]) == :ok
   end
 
   test """
   returns error and missing field list if data map does NOT have all fields
   """ do
-    assert PDF.Template.check_data(%PDF.Template.Test{}, %{
+    assert PDF.Template.check_data([:test_field_1, :test_field_2], [
       test_field_1: "data"
-    }) == {:error, [:test_field_2]}
+    ]) == {:error, "Missing data fields: test_field_2"}
+  end
+
+  # PDF.Template.check_template_file/2
+
+  test """
+  returns ok if template file exists
+  """ do
+    config = %PDF.Config{}
+    template = %PDF.Template.Test{}
+
+    assert PDF.Template.check_template_file(config.base_path, template.file) == :ok
+  end
+
+  test """
+  returns {:error, "Template file missing"} if template file does not exist
+  """ do
+    config = %PDF.Config{}
+    template = %PDF.Template.TestMissingFile{}
+
+    assert PDF.Template.check_template_file(config.base_path, template.file) == {:error, "Template file missing"}
   end
 end
