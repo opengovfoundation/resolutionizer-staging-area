@@ -4,10 +4,10 @@ defmodule PDF.Template.Resolution do
     fields: [],
     options: [
       "--disable-smart-shrinking",
-      {"-T", "25"},
-      {"-B", "25"},
-      {"-L", "25"},
-      {"-R", "25"},
+      "-T", "25",
+      "-B", "25",
+      "-L", "25",
+      "-R", "25",
     ]
   )
 end

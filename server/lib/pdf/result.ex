@@ -1,3 +1,3 @@
-defmodule PDF.Result do
-  defstruct file: "", size: 0
+defmodule Resolutionizer.PDF.Result do
+  defstruct path: "", size: 0
 end

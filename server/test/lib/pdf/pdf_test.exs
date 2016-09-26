@@ -9,7 +9,14 @@ defmodule Resolutionizer.PDFTest do
   import Resolutionizer.PDF.Template.Test
   import Resolutionizer.PDF.Template.TestMissingFile
 
+  @output_dir "#{System.tmp_dir}/resolutionizer_pdfs/test"
+
   doctest PDF
+
+  # Clear out the test output dir each time
+  setup do
+    on_exit fn -> File.rm_rf @output_dir end
+  end
 
   # PDF.start/0
 
@@ -61,9 +68,9 @@ defmodule Resolutionizer.PDFTest do
   """ do
     data = [ test_field_1: "dat", test_field_2: "moar data" ]
 
-    config = PDF.start
-    |> PDF.template("Test")
-    |> PDF.data(data)
+    config = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("Test")
+      |> PDF.data(data)
 
     assert config.data == data
   end
@@ -73,10 +80,10 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: template not found
   """ do
-    result = PDF.start
-    |> PDF.template("NotARealTemplate")
-    |> PDF.data([])
-    |> PDF.generate
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("NotARealTemplate")
+      |> PDF.data([])
+      |> PDF.generate
 
     assert result == {:error, "Template not found"}
   end
@@ -84,10 +91,10 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: template file missing
   """ do
-    result = PDF.start
-    |> PDF.template("TestMissingFile")
-    |> PDF.data([])
-    |> PDF.generate
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("TestMissingFile")
+      |> PDF.data([])
+      |> PDF.generate
 
     assert result == {:error, "Template file missing"}
   end
@@ -95,10 +102,10 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: missing data fields
   """ do
-    result = PDF.start
-    |> PDF.template("Test")
-    |> PDF.data([test_field_1: "data"])
-    |> PDF.generate
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("Test")
+      |> PDF.data([test_field_1: "data"])
+      |> PDF.generate
 
     assert result == {:error, "Missing data fields: test_field_2"}
   end
@@ -106,20 +113,43 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: EEx.SyntaxError
   """ do
-    result = PDF.start
-    |> PDF.template("TestBadTemplate")
-    |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
-    |> PDF.generate
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("TestBadTemplate")
+      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.generate
 
     assert result == {:error, "EEx.SyntaxError: missing token '%>'"}
   end
 
-  #test """
-  #catches error: wkhtmltopdf error
-  #"""
+  test """
+  catches error: wkhtmltopdf error
+  """ do
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("TestBadOptions")
+      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.generate
 
-  #test """
-  #returns %PDF.Result{} with valid file size and path
-  #"""
+    {status, error} = result
+
+    assert status == :error
+    assert String.match? error, ~r/wkhtmltopdf/
+  end
+
+  test """
+  returns %PDF.Result{} with valid file size and path
+  """ do
+    result = PDF.start(%{ tmp_dir: @output_dir })
+      |> PDF.template("Test")
+      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.generate
+
+    {status, %{ path: path, size: size }} = result
+
+    %{ size: real_size } = File.stat! path
+
+    assert status == :ok
+    assert String.match? path, ~r/resolutionizer_pdfs\/test\/test_(\d+)\.pdf/
+    assert real_size == size
+  end
 
 end
