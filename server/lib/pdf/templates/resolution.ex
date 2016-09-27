@@ -1,7 +1,7 @@
-defmodule PDF.Template.Resolution do
+defmodule Resolutionizer.PDF.Template.Resolution do
   defstruct(
     file: "resolution.html.eex",
-    fields: [],
+    fields: [:sponsors, :content],
     options: [
       "--disable-smart-shrinking",
       "-T", "25",
