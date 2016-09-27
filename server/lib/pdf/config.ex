@@ -1,4 +1,8 @@
 defmodule Resolutionizer.PDF.Config do
+  @moduledoc """
+  Base configuration struct for the PDF module.
+  """
+
   alias Resolutionizer.PDF
 
   defstruct(

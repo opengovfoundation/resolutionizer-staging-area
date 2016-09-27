@@ -1,4 +1,6 @@
 defmodule Resolutionizer.PDF.Template.TestMissingFile do
+  @moduledoc false
+
   defstruct(
     file: "FILE NOT HERE",
     fields: [:test_field_1, :test_field_2],

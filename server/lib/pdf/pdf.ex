@@ -28,7 +28,7 @@ defmodule Resolutionizer.PDF do
   Set the template used. Templates defined in `./templates/`.
   """
 
-  def template(%Config{}=config, template_name) when template_name != "" do
+  def template(%Config{} = config, template_name) when template_name != "" do
     struct(config, [template_name: template_name])
   end
 
@@ -36,7 +36,7 @@ defmodule Resolutionizer.PDF do
   Set the data to be used in the `.html.eex` template
   """
 
-  def data(%Config{}=config, data) do
+  def data(%Config{} = config, data) do
     struct(config, [data: data])
   end
 
@@ -46,7 +46,7 @@ defmodule Resolutionizer.PDF do
   Returns a result object of either `{:error, reason}` or `{:ok, %PDF.Result{}}`
   """
 
-  def generate(%Config{}=config) do
+  def generate(%Config{} = config) do
     with {:ok, loaded_config} <- load_template(config),
          :ok <- check_template(loaded_config),
          {:ok, html_path} <- compile_html(loaded_config),

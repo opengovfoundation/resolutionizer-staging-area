@@ -1,4 +1,6 @@
 defmodule Resolutionizer.PDF.Template.TestBadTemplate do
+  @moduledoc false
+
   defstruct(
     file: "../../../test/support/pdf/templates/test_bad_template.html.eex",
     fields: [:test_field_1, :test_field_2],

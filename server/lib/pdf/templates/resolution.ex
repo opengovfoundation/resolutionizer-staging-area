@@ -1,4 +1,6 @@
 defmodule Resolutionizer.PDF.Template.Resolution do
+  @moduledoc false
+
   defstruct(
     file: "resolution.html.eex",
     fields: [:sponsors, :content],
