@@ -340,16 +340,19 @@ viewClauseTypeSelector doc selectedNewClauseType =
 
 clauseTypeSelect : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
 clauseTypeSelect doc selectedClauseType =
-    select [] <|
-        List.map
-            (\clauseType ->
-                option
-                    [ selected (clauseType == selectedClauseType)
-                    , onClick (SetSelectedClauseType clauseType)
-                    ]
-                    [ clauseTypeFormatter doc clauseType ]
-            )
-            (Dict.keys doc.validClauseTypes)
+    let
+        determineSelectedClauseType =
+            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (getClauseTypeFromDisplayName doc)
+    in
+        select [ Exts.Html.Events.onSelect (SetSelectedClauseType << determineSelectedClauseType) ] <|
+            List.map
+                (\clauseType ->
+                    option
+                        [ selected (clauseType == selectedClauseType)
+                        ]
+                        [ clauseTypeFormatter doc clauseType ]
+                )
+                (Dict.keys doc.validClauseTypes)
 
 
 clauseTypeFormatter : Doc.Model.Model -> Doc.Model.ClauseType -> Html msg
@@ -360,3 +363,12 @@ clauseTypeFormatter doc clauseType =
                 [ Dict.get clauseType doc.validClauseTypes
                 , Dict.get doc.defaultClauseType doc.validClauseTypes
                 ]
+
+
+getClauseTypeFromDisplayName : Doc.Model.Model -> String -> Maybe Doc.Model.ClauseType
+getClauseTypeFromDisplayName doc displayName =
+    doc.validClauseTypes
+        |> Dict.toList
+        |> List.filter (\( _, clauseTypeDesc ) -> clauseTypeDesc.displayName == displayName)
+        |> List.map fst
+        |> List.head
