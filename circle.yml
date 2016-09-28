@@ -53,6 +53,8 @@ dependencies:
         ./configure --prefix=$HOME/sysconfcpus;
         make && make install;
       fi
+    # Create test postgres user
+    - PGPASSWORD=resolutionizer_pass createuser -d resolutionizer
 
 
 test:
