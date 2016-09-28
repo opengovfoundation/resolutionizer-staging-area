@@ -60,7 +60,7 @@ test:
     # The `| tee ...` bit is to error out if the build produces warnings, the
     # `====` catches warnings, the `---` catches compile errors
     - cd client && $HOME/sysconfcpus/bin/sysconfcpus -n 2 make build 2>&1 | tee /dev/tty | grep '====\|---'; test $? -eq 1
-    - cd server && mix do compile --warnings-as-errors, dogma
+    - cd server && mix do compile --warnings-as-errors, dogma, test
 
 
 notify:
