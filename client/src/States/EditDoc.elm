@@ -11,6 +11,7 @@ import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
+import Exts.Html.Events
 
 
 type Route
@@ -21,7 +22,7 @@ type Route
 type alias State =
     { doc : Doc.Model.Model
     , dateSelector : Inputs.DateSelector.Model
-    , selectedNewSponsor : String
+    , selectedNewSponsor : Maybe String
     , selectedNewClauseType : Doc.Model.ClauseType
     , uid : Int
     , activeRoute : Route
@@ -37,8 +38,8 @@ type Msg
     | DeleteClause Int
     | SetActiveRoute Route
     | NewSponsor
-    | UpdateSponsor Int String
-    | SetSelectedSponsor String
+    | UpdateSponsor Int (Maybe String)
+    | SetSelectedSponsor (Maybe String)
     | DateSelectorMsg Inputs.DateSelector.Msg
     | NoOp
 
@@ -51,7 +52,7 @@ init doc =
     in
         ( { doc = doc
           , dateSelector = dateSelectorModel
-          , selectedNewSponsor = ""
+          , selectedNewSponsor = List.head doc.validSponsors
           , selectedNewClauseType = doc.defaultClauseType
           , uid = Dict.size doc.clauses + Dict.size doc.sponsors
           , activeRoute = Meta
@@ -152,28 +153,39 @@ update msg state =
                 doc =
                     state.doc
 
-                newDoc =
-                    { doc | sponsors = Dict.insert state.uid (Doc.Model.newSponsor ((Dict.size doc.sponsors) + 1) state.selectedNewSponsor) doc.sponsors }
+                newDoc selectedNewSponsor =
+                    { doc | sponsors = Dict.insert state.uid (Doc.Model.newSponsor ((Dict.size doc.sponsors) + 1) selectedNewSponsor) doc.sponsors }
             in
-                ( { state
-                    | uid = state.uid + 1
-                    , doc = newDoc
-                  }
-                , Cmd.none
-                )
+                case state.selectedNewSponsor of
+                    Nothing ->
+                        ( state, Cmd.none )
 
-        UpdateSponsor id sponsorName ->
+                    Just selectedNewSponsor ->
+                        ( { state
+                            | uid = state.uid + 1
+                            , doc = newDoc selectedNewSponsor
+                          }
+                        , Cmd.none
+                        )
+
+        UpdateSponsor id mSponsorName ->
             let
-                updateSponsor =
+                updateSponsor sponsorName =
                     Maybe.map (\s -> { s | name = sponsorName })
 
                 doc =
                     state.doc
 
-                newDoc =
-                    { doc | sponsors = Dict.update id updateSponsor state.doc.sponsors }
+                newDoc sponsorName =
+                    { doc | sponsors = Dict.update id (updateSponsor sponsorName) state.doc.sponsors }
             in
-                ( { state | doc = newDoc }, Cmd.none )
+                case mSponsorName of
+                    -- TODO: should this mean delete sponsor?
+                    Nothing ->
+                        ( state, Cmd.none )
+
+                    Just sponsorName ->
+                        ( { state | doc = newDoc sponsorName }, Cmd.none )
 
         DateSelectorMsg msg' ->
             let
@@ -249,7 +261,7 @@ viewSponsors state =
         , div [ class "usa-width-five-sixths" ]
             [ viewSponsorSelectors state.doc
             , div [ class "add-selector" ]
-                [ sponsorSelect state.doc state.selectedNewSponsor (SetSelectedSponsor)
+                [ sponsorSelect state.doc state.selectedNewSponsor SetSelectedSponsor
                 , button [ class "usa-button-plain add", onClick (NewSponsor) ] []
                 ]
             ]
@@ -259,20 +271,19 @@ viewSponsors state =
 viewSponsorSelectors : Doc.Model.Model -> Html Msg
 viewSponsorSelectors doc =
     div [] <|
-        List.map (\sponsor -> sponsorSelect doc sponsor.name (UpdateSponsor sponsor.pos)) <|
-            List.sortBy .pos <|
-                Dict.values <|
+        List.map (\( id, sponsor ) -> sponsorSelect doc (Just sponsor.name) (UpdateSponsor id)) <|
+            List.sortBy (.pos << snd) <|
+                Dict.toList <|
                     doc.sponsors
 
 
-sponsorSelect : Doc.Model.Model -> String -> (String -> Msg) -> Html Msg
+sponsorSelect : Doc.Model.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
 sponsorSelect doc selectedSponsor toMsg =
-    select [] <|
+    select [ Exts.Html.Events.onSelect toMsg ] <|
         List.map
             (\sponsor ->
                 option
-                    [ selected (sponsor == selectedSponsor)
-                    , onClick (toMsg sponsor)
+                    [ selected ((Just sponsor) == selectedSponsor)
                     ]
                     [ text sponsor ]
             )
