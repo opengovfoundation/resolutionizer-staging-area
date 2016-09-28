@@ -154,7 +154,14 @@ update msg state =
                     state.doc
 
                 newDoc selectedNewSponsor =
-                    { doc | sponsors = Dict.insert state.uid (Doc.Model.newSponsor ((Dict.size doc.sponsors) + 1) selectedNewSponsor) doc.sponsors }
+                    -- TODO: display message to user stating the sponsor is
+                    -- already present
+                    case List.member selectedNewSponsor <| List.map .name <| Dict.values doc.sponsors of
+                        True ->
+                            doc
+
+                        False ->
+                            { doc | sponsors = Dict.insert state.uid (Doc.Model.newSponsor ((Dict.size doc.sponsors) + 1) selectedNewSponsor) doc.sponsors }
             in
                 case state.selectedNewSponsor of
                     Nothing ->
