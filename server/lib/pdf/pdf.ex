@@ -13,9 +13,9 @@ defmodule Resolutionizer.PDF do
 
   ```
   PDF.start
-    |> PDF.template(template_name)
-    |> PDF.data(data)
-    |> PDF.generate
+  |> PDF.template(template_name)
+  |> PDF.data(data)
+  |> PDF.generate
   ```
 
   `data` is expected to be a Map

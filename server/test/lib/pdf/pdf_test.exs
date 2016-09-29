@@ -68,7 +68,8 @@ defmodule Resolutionizer.PDFTest do
   """ do
     data = %{ "test_field_1" => "dat", "test_field_2" => "moar data" }
 
-    config = %{ tmp_dir: @output_dir }
+    config =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("Test")
       |> PDF.data(data)
@@ -81,7 +82,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: template not found
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("NotARealTemplate")
       |> PDF.data(%{})
@@ -93,7 +95,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: template file missing
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestMissingFile")
       |> PDF.data(%{})
@@ -105,7 +108,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: missing data fields
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("Test")
       |> PDF.data(%{ "test_field_1" => "data" })
@@ -117,7 +121,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: EEx.SyntaxError
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestBadTemplate")
       |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
@@ -129,7 +134,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   catches error: wkhtmltopdf error
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestBadOptions")
       |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
@@ -144,7 +150,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   returns %PDF.Result{} with valid file size and path
   """ do
-    result = %{ tmp_dir: @output_dir }
+    result =
+      %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("Test")
       |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
