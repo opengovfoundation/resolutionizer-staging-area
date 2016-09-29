@@ -22,18 +22,18 @@ defmodule Resolutionizer.PDF.TemplateTest do
   # PDF.Template.check_data/2
 
   test "returns success result if data map has all required fields" do
-    assert PDF.Template.check_data([:test_field_1, :test_field_2], [
-      test_field_1: "data",
-      test_field_2: "moar data"
-    ]) == :ok
+    assert PDF.Template.check_data([:test_field_1, :test_field_2], %{
+      "test_field_1" => "data",
+      "test_field_2" => "moar data"
+    }) == :ok
   end
 
   test """
   returns error and missing field list if data map does NOT have all fields
   """ do
-    assert PDF.Template.check_data([:test_field_1, :test_field_2], [
-      test_field_1: "data"
-    ]) == {:error, "Missing data fields: test_field_2"}
+    assert PDF.Template.check_data([:test_field_1, :test_field_2], %{
+      "test_field_1" => "data"
+    }) == {:error, "Missing data fields: test_field_2"}
   end
 
   # PDF.Template.check_template_file/2

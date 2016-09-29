@@ -18,6 +18,9 @@ defmodule Resolutionizer.PDF do
     |> PDF.generate
   ```
 
+  `data` is expected to be a Map
+  `template_name` is expcted to be a String
+
   Error handling will occur in PDF.generate/1
   """
 
@@ -78,12 +81,17 @@ defmodule Resolutionizer.PDF do
 
     try do
       File.mkdir_p! config.tmp_dir
-      result = EEx.eval_file template_file, config.data
+      result = EEx.eval_file template_file, data_map_to_list(config.data)
       File.write! output_file, result
       {:ok, output_file}
     rescue
       e in EEx.SyntaxError -> {:error, "EEx.SyntaxError: #{e.message}"}
     end
+  end
+
+  # Takes a map of string key'd data and converts it into an atom keyword list
+  defp data_map_to_list(data_map) do
+    for {key, val} <- data_map, into: [], do: { String.to_atom(key), val }
   end
 
   defp generate_pdf(config, html_path) do

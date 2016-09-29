@@ -32,7 +32,7 @@ defmodule Resolutionizer.PDFTest do
     default_config = PDF.start
     assert default_config.base_path
     assert default_config.template == %PDF.Template{}
-    assert default_config.data == []
+    assert default_config.data == %{}
   end
 
   # PDF.start/1
@@ -66,7 +66,7 @@ defmodule Resolutionizer.PDFTest do
   test """
   setting data to config object works
   """ do
-    data = [ test_field_1: "dat", test_field_2: "moar data" ]
+    data = %{ "test_field_1" => "dat", "test_field_2" => "moar data" }
 
     config = %{ tmp_dir: @output_dir }
       |> PDF.start
@@ -84,7 +84,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("NotARealTemplate")
-      |> PDF.data([])
+      |> PDF.data(%{})
       |> PDF.generate
 
     assert result == {:error, "Template not found"}
@@ -96,7 +96,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestMissingFile")
-      |> PDF.data([])
+      |> PDF.data(%{})
       |> PDF.generate
 
     assert result == {:error, "Template file missing"}
@@ -108,7 +108,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("Test")
-      |> PDF.data([test_field_1: "data"])
+      |> PDF.data(%{ "test_field_1" => "data" })
       |> PDF.generate
 
     assert result == {:error, "Missing data fields: test_field_2"}
@@ -120,7 +120,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestBadTemplate")
-      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
       |> PDF.generate
 
     assert result == {:error, "EEx.SyntaxError: missing token '%>'"}
@@ -132,7 +132,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("TestBadOptions")
-      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
       |> PDF.generate
 
     {status, error} = result
@@ -147,7 +147,7 @@ defmodule Resolutionizer.PDFTest do
     result = %{ tmp_dir: @output_dir }
       |> PDF.start
       |> PDF.template("Test")
-      |> PDF.data([test_field_1: "data", test_field_2: "moar data"])
+      |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
       |> PDF.generate
 
     {status, %{ path: path, size: size }} = result

@@ -23,7 +23,7 @@ defmodule Resolutionizer.PDF.Template do
   def check_data(fields, data) do
     # Collect missing fields from the data map
     missing_fields = Enum.reduce fields, [], fn(field, missing) ->
-      case Keyword.has_key?(data, field) do
+      case Map.has_key?(data, Atom.to_string(field)) do
         false -> [ field | missing ]
         true -> missing
       end
