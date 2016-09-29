@@ -111,7 +111,11 @@ view state =
                 , input [ id "username", name "username", type' "text", onInput (ForSelf << UpdateUsername) ] []
                 , label [ for "password" ] [ text "Password" ]
                 , input [ id "password", name "password", type' "password", onInput (ForSelf << UpdatePassword) ] []
-                , button [] [ text "Login" ]
+                , button
+                    [ classList
+                        [ ( "usa-button-disabled", state.username == "" || state.password == "" ) ]
+                    ]
+                    [ text "Login" ]
                 ]
             ]
         ]
