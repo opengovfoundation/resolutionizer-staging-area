@@ -7,6 +7,8 @@ defmodule Resolutionizer.DocumentController do
 
   alias Resolutionizer.PDF
 
+  def pdf(conn), do: pdf_bad_request(conn)
+
   def pdf(conn, %{ "document" => document_params }) do
     result =
       PDF.start
@@ -19,8 +21,6 @@ defmodule Resolutionizer.DocumentController do
       {:error, error} -> pdf_error(conn, error)
     end
   end
-
-  def pdf(conn, _params), do: pdf_bad_request(conn)
 
   defp pdf_success(conn, pdf) do
     conn
