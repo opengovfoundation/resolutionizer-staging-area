@@ -1,4 +1,4 @@
-module Doc.Model exposing (Model, Clause, ClauseInfo, ClauseType, emptyDoc, newClause, newSponsor)
+module Doc.Model exposing (Model, Clause, ClauseInfo, ClauseType, emptyDoc, addNewClause, newClause, newSponsor)
 
 import Date exposing (Date)
 import Dict exposing (Dict)
@@ -39,6 +39,7 @@ type alias ClauseType =
 
 type alias ClauseTypeDesc =
     { displayName : String
+    , sortWeight : Int
     }
 
 
@@ -57,12 +58,48 @@ emptyDoc =
     , validSponsors = chicagoSponsors
     , validClauseTypes =
         Dict.fromList
-            [ ( "Whereas", { displayName = "WHEREAS" } )
-            , ( "BeItResolved", { displayName = "BE IT RESOLVED" } )
-            , ( "BeItFurtherResolved", { displayName = "BE IT FURTHER RESOLVED" } )
+            [ ( "Whereas", { displayName = "WHEREAS", sortWeight = 1 } )
+            , ( "BeItResolved", { displayName = "BE IT RESOLVED", sortWeight = 2 } )
+            , ( "BeItFurtherResolved", { displayName = "BE IT FURTHER RESOLVED", sortWeight = 3 } )
             ]
     , defaultClauseType = "Whereas"
     }
+
+
+addNewClause : Int -> ClauseType -> Model -> Model
+addNewClause id clauseType doc =
+    let
+        newClauses =
+            Dict.insert id (newClause id ((Dict.size doc.clauses) + 1) clauseType "") doc.clauses
+                |> sortClauses
+
+        sortClauses clauses =
+            clauses
+                |> Dict.toList
+                |> List.sortWith clauseCompare
+                |> List.indexedMap (\idx ( id, clause ) -> ( id, { clause | pos = idx + 1 } ))
+                |> Dict.fromList
+
+        clauseCompare ( _, clauseA ) ( _, clauseB ) =
+            let
+                sortWeightA =
+                    getClauseSortWeight clauseA.ctype
+
+                sortWeightB =
+                    getClauseSortWeight clauseB.ctype
+            in
+                if sortWeightA /= sortWeightB then
+                    compare sortWeightA sortWeightB
+                else
+                    compare clauseA.pos clauseB.pos
+
+        getClauseSortWeight clauseType =
+            doc.validClauseTypes
+                |> Dict.get clauseType
+                |> Maybe.map .sortWeight
+                |> Maybe.withDefault 0
+    in
+        { doc | clauses = newClauses }
 
 
 newClause : Int -> Int -> ClauseType -> String -> Clause

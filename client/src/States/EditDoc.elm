@@ -106,11 +106,8 @@ update msg state =
 
         NewClause ->
             let
-                doc =
-                    state.doc
-
                 newDoc =
-                    { doc | clauses = Dict.insert state.uid (Doc.Model.newClause state.uid ((Dict.size doc.clauses) + 1) state.selectedNewClauseType "") doc.clauses }
+                    Doc.Model.addNewClause state.uid state.selectedNewClauseType state.doc
             in
                 ( { state
                     | uid = state.uid + 1
