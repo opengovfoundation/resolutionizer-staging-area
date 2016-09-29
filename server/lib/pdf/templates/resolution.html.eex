@@ -110,11 +110,11 @@
 <body>
   <div class="sponsors">
     <p class="sponsors-content">
-      <%= sponsors %>
+      <%= Enum.join(sponsors, ", ") %>
     </p>
   </div>
   <div class="date">
-    July 20, 2016
+    <%= Timex.parse!(meeting_date, "%m/%d/%Y", :strftime) |> Timex.format!("%B %d, %Y", :strftime) %>
   </div>
 
   <div class="main">
@@ -122,12 +122,11 @@
   </div>
 
   <div class="signatures">
-    <div class="signature">
-      <p>Mayor</p>
-    </div>
-    <div class="signature">
-      <p>City Clerk</p>
-    </div>
+    <%= for sponsor <- sponsors do %>
+      <div class="signature">
+        <p><%= sponsor %></p>
+      </div>
+    <% end %>
   </div>
 
 </body>
