@@ -143,6 +143,8 @@ in {
 
           users.extraUsers.resolutionizer = {
             description = "resolutionizer user";
+            home = "/var/lib/resolutionizer";
+            createHome = true;
           };
 
           users.extraGroups.resolutionizer = {
