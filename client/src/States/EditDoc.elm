@@ -247,12 +247,12 @@ update msg state =
                     Encode.object
                         [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
                         , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
-                        , ( "clauses", Encode.list <| List.map encodeDocClause <| List.sortBy .pos <| Dict.values doc.clauses )
+                        , ( "clauses", Encode.list <| List.map (encodeDocClause doc) <| List.sortBy .pos <| Dict.values doc.clauses )
                         ]
 
-                encodeDocClause clause =
+                encodeDocClause doc clause =
                     Encode.object
-                        [ ( "type", Encode.string clause.ctype )
+                        [ ( "type", Encode.string <| getDisplayNameForClauseType doc clause.ctype )
                         , ( "content", Encode.string clause.content )
                         ]
 
@@ -440,8 +440,13 @@ clauseTypeSelect doc selectedClauseType =
 
 clauseTypeFormatter : Doc.Model.Model -> Doc.Model.ClauseType -> Html msg
 clauseTypeFormatter doc clauseType =
-    Maybe.withDefault (text "ERROR") <|
-        Maybe.map (text << .displayName) <|
+    text <| getDisplayNameForClauseType doc clauseType
+
+
+getDisplayNameForClauseType : Doc.Model.Model -> Doc.Model.ClauseType -> String
+getDisplayNameForClauseType doc clauseType =
+    Maybe.withDefault "ERROR" <|
+        Maybe.map .displayName <|
             Maybe.oneOf
                 [ Dict.get clauseType doc.validClauseTypes
                 , Dict.get doc.defaultClauseType doc.validClauseTypes
