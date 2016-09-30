@@ -257,7 +257,7 @@ update msg state =
                         ]
 
                 cmd =
-                    Exts.Http.postJson Decode.string "/api/v1/document/pdf" (Http.string body)
+                    Exts.Http.postJson (Decode.at [ "id" ] Decode.string) "/api/v1/document/pdf" (Http.string body)
                         |> RemoteData.asCmd
                         |> Cmd.map PreviewResponse
             in
@@ -302,7 +302,7 @@ viewClauseRoute state =
         [ text "Enter the text for the resolution's clauses below."
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
-        , button [ onClick DoPreview, class "pull-right" ] [ text "Preview" ]
+        , button [ onClick DoPreview, class "pull-right" ] [ text "Generate PDF" ]
         ]
 
 
@@ -326,7 +326,7 @@ viewPreviewRequest request =
             text "Failed"
 
         RemoteData.Success str ->
-            text str
+            a [ class "usa-button usa-button-big", href ("/api/v1/document/" ++ str ++ "/download/pdf") ] [ text "View PDF" ]
 
 
 viewMeta : State -> Html Msg
