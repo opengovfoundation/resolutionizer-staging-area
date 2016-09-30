@@ -1,22 +1,30 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
-import Doc.Model
-import Inputs.DateSelector
 import Dict
-import Html.Lazy exposing (lazy, lazy2)
+import Doc.Model
+import Exts.Date
+import Exts.Html.Events
+import Exts.Http
+import Exts.RemoteData as RemoteData
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
+import Html.Lazy exposing (lazy, lazy2)
+import Http
+import Inputs.DateSelector
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
-import Exts.Html.Events
+import Util
 
 
 type Route
     = Meta
     | Clauses
+    | Preview
 
 
 type alias State =
@@ -27,6 +35,7 @@ type alias State =
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
+    , previewRequest : RemoteData.WebData String
     }
 
 
@@ -42,6 +51,9 @@ type Msg
     | SetSelectedSponsor (Maybe String)
     | DateSelectorMsg Inputs.DateSelector.Msg
     | NoOp
+    | RequestPdf
+    | DoPreview
+    | PreviewResponse (RemoteData.WebData String)
 
 
 init : Doc.Model.Model -> ( State, Cmd Msg )
@@ -57,6 +69,7 @@ init doc =
           , uid = Dict.size doc.clauses + Dict.size doc.sponsors
           , activeRoute = Meta
           , urlPrefix = "/new"
+          , previewRequest = RemoteData.NotAsked
           }
         , Cmd.map DateSelectorMsg dateSelectorCmd
         )
@@ -71,6 +84,9 @@ stateToUrl state =
         Clauses ->
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses")
 
+        Preview ->
+            Just <| UrlChange NewEntry (state.urlPrefix ++ "/preview")
+
 
 locationToRoute : String -> Location -> Maybe Route
 locationToRoute urlPrefix location =
@@ -84,6 +100,8 @@ locationToRoute urlPrefix location =
             Just Meta
         else if locationMatch "/clauses" then
             Just Clauses
+        else if locationMatch "/preview" then
+            Just Preview
         else
             Nothing
 
@@ -207,6 +225,47 @@ update msg state =
         NoOp ->
             ( state, Cmd.none )
 
+        DoPreview ->
+            ( state, Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
+
+        RequestPdf ->
+            let
+                -- TODO: all of this should be broken out into a Api.Document module or similar
+                body =
+                    Encode.encode 0 <|
+                        Encode.object
+                            [ ( "document", encodeDoc state.doc )
+                            ]
+
+                encodeDoc doc =
+                    Encode.object
+                        [ ( "template_name", Encode.string "Resolution" )
+                        , ( "data", encodeDocData doc )
+                        ]
+
+                encodeDocData doc =
+                    Encode.object
+                        [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
+                        , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
+                        , ( "clauses", Encode.list <| List.map encodeDocClause <| List.sortBy .pos <| Dict.values doc.clauses )
+                        ]
+
+                encodeDocClause clause =
+                    Encode.object
+                        [ ( "type", Encode.string clause.ctype )
+                        , ( "content", Encode.string clause.content )
+                        ]
+
+                cmd =
+                    Exts.Http.postJson Decode.string "/api/v1/document/pdf" (Http.string body)
+                        |> RemoteData.asCmd
+                        |> Cmd.map PreviewResponse
+            in
+                ( state, cmd )
+
+        PreviewResponse data ->
+            { state | previewRequest = data } ! []
+
 
 view : State -> Html Msg
 view state =
@@ -224,6 +283,9 @@ viewRoute state =
         Clauses ->
             viewClauseRoute state
 
+        Preview ->
+            viewPreviewRoute state
+
 
 viewMetaRoute : State -> Html Msg
 viewMetaRoute state =
@@ -240,7 +302,31 @@ viewClauseRoute state =
         [ text "Enter the text for the resolution's clauses below."
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
+        , button [ onClick DoPreview, class "pull-right" ] [ text "Preview" ]
         ]
+
+
+viewPreviewRoute : State -> Html Msg
+viewPreviewRoute state =
+    div []
+        [ viewPreviewRequest state.previewRequest
+        ]
+
+
+viewPreviewRequest : RemoteData.WebData String -> Html Msg
+viewPreviewRequest request =
+    case request of
+        RemoteData.NotAsked ->
+            text "Processing..."
+
+        RemoteData.Loading ->
+            text "Loading..."
+
+        RemoteData.Failure err ->
+            text "Failed"
+
+        RemoteData.Success str ->
+            text str
 
 
 viewMeta : State -> Html Msg
@@ -248,7 +334,7 @@ viewMeta state =
     div [ class "form-horizontal" ]
         [ div [ class "usa-grid-full" ]
             [ label [ for "title", class "usa-width-one-sixth" ] [ text "Resolution Title" ]
-            , textarea [ id "title", value state.doc.title, onInput (UpdateTitle), class "usa-width-five-sixths" ] []
+            , textarea [ id "title", value state.doc.title, onInput UpdateTitle, class "usa-width-five-sixths" ] []
             ]
         , div []
             [ label [ for "meeting-date", class "usa-width-one-sixth" ] [ text "Meeting Date" ]
