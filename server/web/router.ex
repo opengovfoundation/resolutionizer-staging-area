@@ -19,6 +19,7 @@ defmodule Resolutionizer.Router do
     pipe_through :api
 
     post "/document/pdf", DocumentController, :pdf
+    get "/document/:id/download/pdf", DocumentController, :download_pdf
   end
 
   scope "/", Resolutionizer do

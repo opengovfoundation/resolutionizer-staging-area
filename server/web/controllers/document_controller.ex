@@ -7,8 +7,20 @@ defmodule Resolutionizer.DocumentController do
 
   alias Resolutionizer.PDF
 
-  def pdf(conn), do: pdf_bad_request(conn)
+  @doc """
+  Creates a new PDF.
 
+  POST /api/v1/document/pdf
+  {
+    "document": {
+      "template_name": "DocumentType",
+      "data": {
+        // Data that is passed to template
+      }
+    }
+  }
+  """
+  def pdf(conn), do: Plug.Conn.send_resp(conn, 400, "Bad request")
   def pdf(conn, %{ "document" => document_params }) do
     result =
       PDF.start
@@ -17,17 +29,29 @@ defmodule Resolutionizer.DocumentController do
       |> PDF.generate
 
     case result do
-      {:ok, pdf} -> pdf_success(conn, pdf)
-      {:error, error} -> pdf_error(conn, error)
+      {:ok, pdf} ->
+        conn
+        |> put_resp_header("content-type", "application/json")
+        |> Plug.Conn.send_resp(200, Poison.encode!(%{id: Path.basename(pdf.path, ".pdf")}))
+      {:error, error} -> Plug.Conn.send_resp(conn, 500, error)
     end
   end
 
-  defp pdf_success(conn, pdf) do
-    conn
-    |> put_resp_header("content-type", "application/pdf")
-    |> Plug.Conn.send_file(200, pdf.path)
-  end
+  @doc """
+  Download a generated PDF.
 
-  defp pdf_bad_request(conn), do: Plug.Conn.send_resp(conn, 400, "Bad request")
-  defp pdf_error(conn, error), do: Plug.Conn.send_resp(conn, 500, error)
+  GET /api/v1/document/:id/download/pdf
+
+  TODO: For now, :id is the filename base, in the future it should be a model ID
+  """
+  def download_pdf(conn), do: Plug.Conn.send_resp(conn, 400, "Bad request")
+  def download_pdf(conn, %{ "id" => id }) do
+    case PDF.path(id) do
+      {:ok, path} ->
+        conn
+        |> put_resp_header("content-type", "applicatoin/pdf")
+        |> Plug.Conn.send_file(200, path)
+      {:error, msg} -> Plug.Conn.send_resp(conn, 400, msg)
+    end
+  end
 end
