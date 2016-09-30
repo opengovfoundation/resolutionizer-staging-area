@@ -118,7 +118,11 @@
   </div>
 
   <div class="main">
-    <%= content %>
+    <%= for %{ "type" => type, "content" => content } <- clauses do %>
+      <p>
+        <span class="clause"><%= type %></span>, <%= content %>
+      </p>
+    <% end %>
   </div>
 
   <div class="signatures">
