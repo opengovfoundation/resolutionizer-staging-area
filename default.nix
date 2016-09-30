@@ -3,5 +3,6 @@
 
 with pkgs;
 {
-  resolutionizer = callPackage ./resolutionizer.nix { inherit elixir; inherit (elmPackages) elm-compiler elm-make elm-package; npm = nodePackages.npm; };
+  server = callPackage ./server { inherit elixir; };
+  client = callPackage ./client { inherit (elmPackages) elm-compiler elm-make elm-package; npm = nodePackages.npm; };
 }
