@@ -114,7 +114,7 @@
     </p>
   </div>
   <div class="date">
-    <%= Timex.parse!(meeting_date, "%m/%d/%Y", :strftime) |> Timex.format!("%B %d, %Y", :strftime) %>
+    <%= Timex.parse!(meeting_date, "%F", :strftime) |> Timex.format!("%B %d, %Y", :strftime) %>
   </div>
 
   <div class="main">
