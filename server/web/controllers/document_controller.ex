@@ -49,7 +49,7 @@ defmodule Resolutionizer.DocumentController do
     case PDF.path(id) do
       {:ok, path} ->
         conn
-        |> put_resp_header("content-type", "applicatoin/pdf")
+        |> put_resp_header("content-type", "application/pdf")
         |> Plug.Conn.send_file(200, path)
       {:error, msg} -> Plug.Conn.send_resp(conn, 400, msg)
     end
