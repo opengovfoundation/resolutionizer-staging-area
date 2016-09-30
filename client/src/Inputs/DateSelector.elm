@@ -6,7 +6,7 @@ import DateSelectorDropdown
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Task
+import Util
 
 
 type Model
@@ -24,13 +24,12 @@ type Msg
     = Select Date
     | Toggle
     | Init Date
-    | InitFailure String
     | NoOp
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Uninitialized, Task.perform InitFailure Init Date.now )
+    ( Uninitialized, Util.performFailproof Init Date.now )
 
 
 initRunning : Date -> Model
@@ -54,7 +53,9 @@ update msg model =
         Uninitialized ->
             case msg of
                 Init date ->
-                    ( initRunning date, Cmd.none, Nothing )
+                    -- After getting the running state, we send a NoOp message
+                    -- to emit the correct selected date
+                    ( initRunning date, Util.msgToCmd NoOp, Nothing )
 
                 _ ->
                     ( model, Cmd.none, Nothing )
@@ -65,10 +66,10 @@ update msg model =
                     ( Running { state | selected = Just date }, Cmd.none, Just date )
 
                 Toggle ->
-                    ( Running { state | dropdownOpen = not state.dropdownOpen }, Cmd.none, Nothing )
+                    ( Running { state | dropdownOpen = not state.dropdownOpen }, Cmd.none, state.selected )
 
                 _ ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, state.selected )
 
 
 view : Model -> Html Msg

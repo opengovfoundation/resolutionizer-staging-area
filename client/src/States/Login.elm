@@ -3,7 +3,7 @@ module States.Login exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Task
+import Util
 
 
 type alias State =
@@ -76,7 +76,7 @@ update msg state =
             in
                 ( { state | error = not validCredentials }
                 , if validCredentials then
-                    Task.perform identity identity (Task.succeed (ForParent LoggedIn))
+                    Util.msgToCmd (ForParent LoggedIn)
                   else
                     Cmd.none
                 )
