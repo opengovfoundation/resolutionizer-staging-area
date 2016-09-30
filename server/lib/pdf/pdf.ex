@@ -109,4 +109,20 @@ defmodule Resolutionizer.PDF do
     size
   end
 
+  @doc """
+  Returns the full file path to an existing PDF.
+  """
+
+  def path(base), do: path_check("#{System.tmp_dir}/resolutionizer_pdfs/#{base}.pdf")
+  def path(base, dir) do
+    path_check("#{dir}/#{base}.pdf")
+  end
+
+  defp path_check(full_path) do
+    case File.exists?(full_path) do
+      true -> {:ok, full_path}
+      false -> {:error, "File not found"}
+    end
+  end
+
 end

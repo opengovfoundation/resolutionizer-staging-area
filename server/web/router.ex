@@ -15,8 +15,11 @@ defmodule Resolutionizer.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/api", Resolutionizer do
+  scope "/api/v1", Resolutionizer do
     pipe_through :api
+
+    post "/document/pdf", DocumentController, :pdf
+    get "/document/:id/download/pdf", DocumentController, :download_pdf
   end
 
   scope "/", Resolutionizer do

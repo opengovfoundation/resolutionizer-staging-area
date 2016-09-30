@@ -166,4 +166,25 @@ defmodule Resolutionizer.PDFTest do
     assert real_size == size
   end
 
+  # PDF.path/1
+
+  test "it returns the full path to a PDF if it exists" do
+    {:ok, pdf} = make_pdf
+    {:ok, full_path} = PDF.path(Path.basename(pdf.path, ".pdf"), @output_dir)
+    assert full_path == pdf.path
+  end
+
+  test "it returns an error if the PDF does not exist" do
+    {status, _} = PDF.path("notarealfilelolololol", @output_dir)
+    assert status == :error
+  end
+
+  defp make_pdf do
+    %{ tmp_dir: @output_dir }
+    |> PDF.start
+    |> PDF.template("Test")
+    |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
+    |> PDF.generate
+  end
+
 end
