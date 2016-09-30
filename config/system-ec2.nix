@@ -99,7 +99,7 @@ in {
                 try_files $uri $uri/ /index.html;
               }
 
-              location = /api/ {
+              location /api/ {
                 proxy_redirect off;
                 proxy_pass http://phoenix_upstream;
               }
