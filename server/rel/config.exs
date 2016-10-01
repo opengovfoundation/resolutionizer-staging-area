@@ -19,7 +19,7 @@ environment :dev do
 end
 
 environment :prod do
-  set include_erts: true
+  set include_erts: false
   set include_src: false
 
   # set post_start_hook: "rel/hooks/post_start"
@@ -33,4 +33,3 @@ end
 release :resolutionizer do
   set version: current_version(:resolutionizer)
 end
-

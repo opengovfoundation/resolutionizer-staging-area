@@ -16,7 +16,6 @@ config :resolutionizer, Resolutionizer.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
-# Finally import the config/prod.secret.exs
-# which should be versioned separately.
-# TODO: get all config from environment variables at runtime
-import_config "prod.secret.exs"
+config :resolutionizer, Resolutionizer.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  url: {:system, "DBURL"}
