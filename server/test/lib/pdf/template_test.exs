@@ -36,23 +36,4 @@ defmodule Resolutionizer.PDF.TemplateTest do
     }) == {:error, "Missing data fields: test_field_2"}
   end
 
-  # PDF.Template.check_template_file/2
-
-  test """
-  returns ok if template file exists
-  """ do
-    config = %PDF.Config{}
-    template = %PDF.Template.Test{}
-
-    assert PDF.Template.check_template_file(config.base_path, template.file) == :ok
-  end
-
-  test """
-  returns {:error, "Template file missing"} if template file does not exist
-  """ do
-    config = %PDF.Config{}
-    template = %PDF.Template.TestMissingFile{}
-
-    assert PDF.Template.check_template_file(config.base_path, template.file) == {:error, "Template file missing"}
-  end
 end

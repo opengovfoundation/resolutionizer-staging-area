@@ -1,9 +1,15 @@
-{ gawk, elixir, makeWrapper, stdenv, wkhtmltopdf
+{ gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf
 }:
-stdenv.mkDerivation rec {
+let
+  cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
+    (type == "directory" && baseName == ".git") ||
+    (type == "directory" && baseName == "_build") ||
+    (type == "directory" && baseName == "static")
+  );
+in stdenv.mkDerivation rec {
   name = "resolutionizer-server-${version}";
   version = "0.1.0.0";
-  src = ./.;
+  src = builtins.filterSource cleanSource ./.;
   buildInputs = [
     gawk elixir makeWrapper wkhtmltopdf
   ];
@@ -29,9 +35,10 @@ stdenv.mkDerivation rec {
 
     mv $out/bin/resolutionizer $out/bin/resolutionizer-unwrapped
     makeWrapper $out/bin/resolutionizer-unwrapped $out/bin/resolutionizer \
-      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf ]}:$PATH'
+      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf erlang ]}:$PATH'
 
     sed -i -e "s|awk|${gawk}/bin/awk|" $out/releases/0.0.1/resolutionizer.sh
+    sed -i -e "s|which|${which}/bin/which|" $out/releases/0.0.1/resolutionizer.sh
 
     mkdir $out/log
   '';

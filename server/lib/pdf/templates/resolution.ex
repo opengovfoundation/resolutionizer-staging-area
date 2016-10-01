@@ -1,6 +1,8 @@
 defmodule Resolutionizer.PDF.Template.Resolution do
   @moduledoc false
 
+  require EEx
+
   defstruct(
     file: "resolution.html.eex",
     fields: [:meeting_date, :sponsors, :clauses],
@@ -12,4 +14,6 @@ defmodule Resolutionizer.PDF.Template.Resolution do
       "-R", "25",
     ]
   )
+
+  EEx.function_from_file :def, :render, "#{__DIR__}/resolution.html.eex", [:assigns]
 end

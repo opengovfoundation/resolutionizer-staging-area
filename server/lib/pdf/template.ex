@@ -11,7 +11,7 @@ defmodule Resolutionizer.PDF.Template do
   """
   def get(template_name) do
     try do
-      {:ok, struct(String.to_existing_atom("Elixir.Resolutionizer.PDF.Template.#{template_name}"))}
+      {:ok, String.to_existing_atom("Elixir.Resolutionizer.PDF.Template.#{template_name}")}
     rescue
       _ -> {:error, "Template not found"}
     end
@@ -32,16 +32,6 @@ defmodule Resolutionizer.PDF.Template do
     case missing_fields do
       [] -> :ok
       _ -> {:error, "Missing data fields: #{Enum.join(missing_fields, ", ")}"}
-    end
-  end
-
-  @doc """
-  Checks if the template file exists with base path and file name combo
-  """
-  def check_template_file(base_path, file) do
-    case File.exists?("#{base_path}/#{file}") do
-      true -> :ok
-      false -> {:error, "Template file missing"}
     end
   end
 

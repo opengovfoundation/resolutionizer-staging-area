@@ -27,16 +27,9 @@ in {
           deployment.ec2.region = region;
           deployment.ec2.accessKeyId = accessKeyId;
           deployment.ec2.instanceType = "t2.micro";
-          deployment.ec2.securityGroups = [ resources.ec2SecurityGroups.resolutionizer-group ];
+          deployment.ec2.securityGroups = [ "default" resources.ec2SecurityGroups.resolutionizer-group ];
           deployment.ec2.keyPair = resources.ec2KeyPairs.resolutionizer-keys;
           deployment.ec2.elasticIPv4 = resources.elasticIPs.resolutionizer-ip;
-
-          # inherit (import ./resolutionizer.nix {
-          #   inherit config pkgs dbUser dbPass dbName dbPort phoenixPort domainName;
-          #   serverPackage = builds.server;
-          #   clientPackage = builds.client;
-          #   dbHost = "${builtins.head (pkgs.lib.splitString '':'' resources.rdsDbInstances.${dbName}.endpoint)}";
-          # });
 
           networking.hostName = "resolutionizer";
           networking.firewall.allowedTCPPorts = [ 22 80 443 ];
@@ -44,15 +37,17 @@ in {
           deployment.keys.resolutionizer-environment.text = ''
             PORT=${toString phoenixPort}
             PGUSER=${dbUser}
-            PGPASS=${dbPass}
+            PGPASSWORD=${dbPass}
             PGDATABASE=${dbName}
             PGPORT=${toString dbPort}
           '';
 
-          environment.systemPackages = [ serverPackage pkgs.postgresql ];
+          environment.systemPackages = [ serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
+
+          nixpkgs.config.allowUnfree = true;
+          fonts.fonts = [ pkgs.corefonts ];
 
           services.nginx.enable = true;
-          # services.nginx.user = "resolutionizer"; # TODO: need this?
           services.nginx.httpConfig = ''
             upstream phoenix_upstream {
               ip_hash;
@@ -79,7 +74,7 @@ in {
 
               ssl_certificate         ${config.security.acme.directory}/${domainName}/fullchain.pem;
               ssl_certificate_key     ${config.security.acme.directory}/${domainName}/key.pem;
-              resolver 8.8.8.8;
+              # resolver 8.8.8.8;
               # ssl_stapling on;
               # ssl_stapling_verify on;
               ssl_session_cache shared:SSL:10m;
@@ -118,6 +113,7 @@ in {
             # correctly inside the deployment.keys.* attribute, the RDS endpoint
             # is empty
             environment.PGHOST = "${dbHost}";
+            environment.DBURL="postgres://${dbUser}:${dbPass}@${dbHost}:${toString dbPort}/${dbName}";
 
             serviceConfig = {
               ExecStart = "${serverPackage}/bin/resolutionizer foreground";
@@ -176,7 +172,7 @@ in {
             toPort = ip;
             sourceIp = "0.0.0.0/0";
           };
-        in map mkOpenPort [22 80 443];
+        in map mkOpenPort [ 22 80 443 ];
   };
 
   resources.rdsDbInstances.${dbResourceName} = {
