@@ -5,6 +5,7 @@
 , dbName
 , dbPort ? 5432
 , phoenixPort ? 4000
+, domainName
 , ...
 }:
 
@@ -20,7 +21,6 @@ in {
         serverPackage = builds.server;
         clientPackage = builds.client;
         dbHost = "${builtins.head (pkgs.lib.splitString '':'' resources.rdsDbInstances.${dbResourceName}.endpoint)}";
-        domainName = "resolutionizer-demo.opengovfoundation.org";
       in
         {
           deployment.targetEnv = "ec2";
