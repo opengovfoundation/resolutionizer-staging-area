@@ -19,7 +19,7 @@ defmodule Resolutionizer.Mixfile do
   def application do
     [mod: {Resolutionizer, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :timex]]
+                    :phoenix_ecto, :postgrex, :timex, :ex_machina]]
   end
 
   # Specifies which paths to compile per environment.
@@ -39,6 +39,7 @@ defmodule Resolutionizer.Mixfile do
      {:dogma, "~> 0.1", only: [:test, :dev]},
      {:timex, "~> 3.0"},
      {:distillery, "~> 0.9"}]
+     {:ex_machina, "~> 1.0"}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.

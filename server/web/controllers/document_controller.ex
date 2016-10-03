@@ -6,6 +6,31 @@ defmodule Resolutionizer.DocumentController do
   use Resolutionizer.Web, :controller
 
   alias Resolutionizer.PDF
+  alias Resolutionizer.Document
+
+  @doc """
+  Create a new document in the database.
+
+  POST /api/v1/document
+  {
+    "document": {
+      "title": "Title of the document",
+      "template_name": "DocumentType",
+      "data": {
+        // Data that is passed to template
+      }
+    }
+
+  }
+  """
+  def create(conn, %{"document" => document_params}) do
+    changeset = Document.changeset(%Document{}, document_params)
+
+    case Repo.insert(changeset) do
+      {:ok, document} -> render(conn, "show.json", document: document)
+      {:error, changeset} -> Plug.Conn.send_resp(conn, 400, changeset)
+    end
+  end
 
   @doc """
   Creates a new PDF.
