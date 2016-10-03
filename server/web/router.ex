@@ -20,6 +20,8 @@ defmodule Resolutionizer.Router do
 
     post "/document/pdf", DocumentController, :pdf
     get "/document/:id/download/pdf", DocumentController, :download_pdf
+
+    resources "/document", DocumentController
   end
 
   scope "/", Resolutionizer do
