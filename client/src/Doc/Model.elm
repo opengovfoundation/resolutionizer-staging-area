@@ -54,13 +54,15 @@ emptyDoc =
                 [ "Whereas"
                 , "Whereas"
                 , "Whereas"
+                , "BeItResolved"
+                , "BeItFurtherResolved"
                 ]
     , validSponsors = chicagoSponsors
     , validClauseTypes =
         Dict.fromList
-            [ ( "Whereas", { displayName = "WHEREAS", sortWeight = 1 } )
-            , ( "BeItResolved", { displayName = "BE IT RESOLVED", sortWeight = 2 } )
-            , ( "BeItFurtherResolved", { displayName = "BE IT FURTHER RESOLVED", sortWeight = 3 } )
+            [ ( "Whereas", { displayName = "Whereas", sortWeight = 1 } )
+            , ( "BeItResolved", { displayName = "Be it resolved", sortWeight = 2 } )
+            , ( "BeItFurtherResolved", { displayName = "Be it further resolved", sortWeight = 3 } )
             ]
     , defaultClauseType = "Whereas"
     }
