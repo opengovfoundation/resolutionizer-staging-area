@@ -72,7 +72,7 @@ update msg state =
         TryLogin ->
             let
                 validCredentials =
-                    state.username == "hello" && state.password == "world"
+                    state.username == "OpenGovFoundation" && state.password == "AssemblyWorks"
             in
                 ( { state | error = not validCredentials }
                 , if validCredentials then

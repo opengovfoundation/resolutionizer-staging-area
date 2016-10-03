@@ -299,7 +299,16 @@ viewMetaRoute state =
 viewClauseRoute : State -> Html Msg
 viewClauseRoute state =
     div []
-        [ text "Enter the text for the resolution's clauses below."
+        [ p [] [ text "Enter the text for the resolution's clauses below." ]
+        , p []
+            [ text "For each additional clause that is needed, select the type of clause to be added and then enter the text. The clause types are "
+            , strong [] [ text "Whereas" ]
+            , text ", "
+            , strong [] [ text "Be it resolved" ]
+            , text ", and "
+            , strong [] [ text "Be it further resolved" ]
+            , text "."
+            ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
         , button [ onClick DoPreview, class "pull-right" ] [ text "Generate PDF" ]
