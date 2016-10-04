@@ -1,8 +1,6 @@
 defmodule Resolutionizer.PDF.TemplateTest do
   @moduledoc false
 
-  import Resolutionizer.PDF.Template.Test
-
   alias Resolutionizer.PDF
 
   use ExUnit.Case
@@ -11,7 +9,7 @@ defmodule Resolutionizer.PDF.TemplateTest do
 
   test "returns specified template config map if valid" do
     {:ok, result} = PDF.Template.get("Test")
-    assert result == %PDF.Template.Test{}
+    assert struct(result) == %PDF.Template.Test{}
   end
 
   test "returns error if template not found" do

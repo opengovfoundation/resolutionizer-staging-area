@@ -5,9 +5,6 @@ defmodule Resolutionizer.PDFTest do
 
   alias Resolutionizer.PDF
 
-  import Resolutionizer.PDF.Template.Test
-  import Resolutionizer.PDF.Template.TestMissingFile
-
   @output_dir "#{System.tmp_dir}/resolutionizer_pdfs/test"
 
   doctest PDF
@@ -22,7 +19,7 @@ defmodule Resolutionizer.PDFTest do
   test """
   start returns Config struct
   """ do
-    assert PDF.start == %PDF.Config{}
+    assert PDF.start == PDF.Config.new
   end
 
   test """
@@ -92,19 +89,6 @@ defmodule Resolutionizer.PDFTest do
   end
 
   test """
-  catches error: template file missing
-  """ do
-    result =
-      %{ tmp_dir: @output_dir }
-      |> PDF.start
-      |> PDF.template("TestMissingFile")
-      |> PDF.data(%{})
-      |> PDF.generate
-
-    assert result == {:error, "Template file missing"}
-  end
-
-  test """
   catches error: missing data fields
   """ do
     result =
@@ -115,19 +99,6 @@ defmodule Resolutionizer.PDFTest do
       |> PDF.generate
 
     assert result == {:error, "Missing data fields: test_field_2"}
-  end
-
-  test """
-  catches error: EEx.SyntaxError
-  """ do
-    result =
-      %{ tmp_dir: @output_dir }
-      |> PDF.start
-      |> PDF.template("TestBadTemplate")
-      |> PDF.data(%{ "test_field_1" => "data", "test_field_2" => "moar data" })
-      |> PDF.generate
-
-    assert result == {:error, "EEx.SyntaxError: missing token '%>'"}
   end
 
   test """

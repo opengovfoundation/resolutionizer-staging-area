@@ -4,7 +4,7 @@ defmodule Resolutionizer.PDF.Template.Resolution do
   require EEx
 
   defstruct(
-    file: "resolution.html.eex",
+    name: "resolution",
     fields: [:meeting_date, :sponsors, :clauses],
     options: [
       "--disable-smart-shrinking",

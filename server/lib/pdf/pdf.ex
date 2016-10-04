@@ -70,9 +70,7 @@ defmodule Resolutionizer.PDF do
   end
 
   defp compile_html(config) do
-    file_base = struct(config.template).file
-      |> String.replace(".html.eex", "")
-      |> String.replace(~r/.+\//, "")
+    file_base = struct(config.template).name
 
     output_file = "#{config.tmp_dir}/#{file_base}_#{System.system_time}.html"
 

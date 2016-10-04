@@ -5,7 +5,7 @@
   <title>Lol</title>
 </head>
 <body>
-  <p>Field 1: <%= test_field_1 %></p>
-  <p>Field 2: <%= test_field_2 %></p>
+  <p>Field 1: <%= @test_field_1 %></p>
+  <p>Field 2: <%= @test_field_2 %></p>
 </body>
 </html>
