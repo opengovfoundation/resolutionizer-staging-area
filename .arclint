@@ -5,7 +5,8 @@
     "(^client/_build/)",
     "(^client/elm-stuff/)",
     "(^client/node_modules/)",
-    "(^server/support/arcanist/arcanist-elixir-support/)"
+    "(^server/support/arcanist/arcanist-elixir-support/)",
+    "(^server/rel/releases/)"
   ],
   "linters": {
     "chmod": {
