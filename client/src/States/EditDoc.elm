@@ -513,7 +513,6 @@ validateClauseTypes clauses =
             |> dictKeysExist
                 [ "Whereas"
                 , "BeItResolved"
-                , "BeItFurtherResolved"
                 ]
 
 
