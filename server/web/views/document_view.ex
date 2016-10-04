@@ -1,6 +1,8 @@
 defmodule Resolutionizer.DocumentView do
   @moduledoc false
 
+  alias Resolutionizer.DocResult
+
   def render("show.json", %{document: document}) do
      document_json(document)
   end
@@ -11,7 +13,8 @@ defmodule Resolutionizer.DocumentView do
         id: document.id,
         title: document.title,
         template_name: document.template_name,
-        data: document.data
+        data: document.data,
+        urls: DocResult.urls({"result", document}, signed: true)
       }
     }
   end

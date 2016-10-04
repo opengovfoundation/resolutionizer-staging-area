@@ -27,3 +27,8 @@ config :resolutionizer, Resolutionizer.Repo,
   database: "resolutionizer_dev",
   hostname: "localhost",
   pool_size: 10
+
+config :arc,
+  bucket: "resolutionizer-dev"
+
+import_config "dev.secret.exs"

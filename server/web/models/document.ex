@@ -1,4 +1,9 @@
 defmodule Resolutionizer.Document do
+  @moduledoc """
+  Represents a document created by a user. Contains a template name and a bundle
+  of data for generating a PDF.
+  """
+
   use Resolutionizer.Web, :model
 
   schema "documents" do
