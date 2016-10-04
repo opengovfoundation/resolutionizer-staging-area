@@ -132,6 +132,8 @@ in {
             postRun = "systemctl restart resolutionizer-server";
           };
 
+          services.xserver.enable = true;
+
           users = {
             mutableUsers = false;
             users.root.openssh.authorizedKeys.keyFiles = [ ~/.ssh/id_rsa.pub ];
