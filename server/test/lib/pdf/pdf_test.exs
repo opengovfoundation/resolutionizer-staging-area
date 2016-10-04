@@ -5,7 +5,6 @@ defmodule Resolutionizer.PDFTest do
 
   alias Resolutionizer.PDF
 
-  import Resolutionizer.PDF.Config
   import Resolutionizer.PDF.Template.Test
   import Resolutionizer.PDF.Template.TestMissingFile
 
