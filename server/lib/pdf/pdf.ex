@@ -25,7 +25,7 @@ defmodule Resolutionizer.PDF do
   """
 
   @doc "Start a new PDF, passing in initial configuration."
-  def start(opts \\ []), do: struct(Config, opts)
+  def start(opts \\ []), do: Config.new(opts)
 
   @doc """
   Set the template used. Templates defined in `./templates/`.
@@ -65,23 +65,18 @@ defmodule Resolutionizer.PDF do
   end
 
   defp check_template(config) do
-    with :ok <- Template.check_template_file(config.base_path, config.template.file),
-         :ok <- Template.check_data(config.template.fields, config.data),
+    with :ok <- Template.check_data(struct(config.template).fields, config.data),
     do: :ok
   end
 
   defp compile_html(config) do
-    template_file = "#{config.base_path}/#{config.template.file}"
-
-    file_base = config.template.file
-      |> String.replace(".html.eex", "")
-      |> String.replace(~r/.+\//, "")
+    file_base = struct(config.template).name
 
     output_file = "#{config.tmp_dir}/#{file_base}_#{System.system_time}.html"
 
     try do
       File.mkdir_p! config.tmp_dir
-      result = EEx.eval_file template_file, data_map_to_list(config.data)
+      result = config.template.render(data_map_to_list(config.data))
       File.write! output_file, result
       {:ok, output_file}
     rescue
@@ -96,7 +91,7 @@ defmodule Resolutionizer.PDF do
 
   defp generate_pdf(config, html_path) do
     pdf_path = String.replace(html_path, ".html", ".pdf")
-    options = Enum.concat(config.template.options, ["-q", html_path, pdf_path])
+    options = Enum.concat(struct(config.template).options, ["-q", html_path, pdf_path])
 
     case System.cmd "wkhtmltopdf", options, stderr_to_stdout: true do
       {_, 0} -> {:ok, %Result{ path: pdf_path, size: get_file_size(pdf_path) }}

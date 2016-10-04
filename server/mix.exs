@@ -37,7 +37,8 @@ defmodule Resolutionizer.Mixfile do
      {:gettext, "~> 0.11"},
      {:cowboy, "~> 1.0"},
      {:dogma, "~> 0.1", only: [:test, :dev]},
-     {:timex, "~> 3.0"}]
+     {:timex, "~> 3.0"},
+     {:distillery, "~> 0.9"}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.

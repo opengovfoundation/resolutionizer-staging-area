@@ -19,6 +19,12 @@ defmodule Resolutionizer.PDF.Config do
     data: %{},
 
     # Temp directory where generated files will be stored
-    tmp_dir: "#{System.tmp_dir}/resolutionizer_pdfs"
+    tmp_dir: nil
   )
+
+  def new(opts \\ []) do
+    __MODULE__
+    |> struct([ tmp_dir: "#{System.tmp_dir}/resolutionizer_pdfs" ])
+    |> struct(opts)
+  end
 end

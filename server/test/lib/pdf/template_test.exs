@@ -1,8 +1,6 @@
 defmodule Resolutionizer.PDF.TemplateTest do
   @moduledoc false
 
-  import Resolutionizer.PDF.Template.Test
-
   alias Resolutionizer.PDF
 
   use ExUnit.Case
@@ -11,7 +9,7 @@ defmodule Resolutionizer.PDF.TemplateTest do
 
   test "returns specified template config map if valid" do
     {:ok, result} = PDF.Template.get("Test")
-    assert result == %PDF.Template.Test{}
+    assert struct(result) == %PDF.Template.Test{}
   end
 
   test "returns error if template not found" do
@@ -36,23 +34,4 @@ defmodule Resolutionizer.PDF.TemplateTest do
     }) == {:error, "Missing data fields: test_field_2"}
   end
 
-  # PDF.Template.check_template_file/2
-
-  test """
-  returns ok if template file exists
-  """ do
-    config = %PDF.Config{}
-    template = %PDF.Template.Test{}
-
-    assert PDF.Template.check_template_file(config.base_path, template.file) == :ok
-  end
-
-  test """
-  returns {:error, "Template file missing"} if template file does not exist
-  """ do
-    config = %PDF.Config{}
-    template = %PDF.Template.TestMissingFile{}
-
-    assert PDF.Template.check_template_file(config.base_path, template.file) == {:error, "Template file missing"}
-  end
 end
