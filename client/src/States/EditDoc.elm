@@ -1,8 +1,9 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
-import Dict
+import Dict exposing (Dict)
 import Doc.Model
 import Exts.Date
+import Exts.Dict
 import Exts.Html.Events
 import Exts.Http
 import Exts.RemoteData as RemoteData
@@ -18,7 +19,9 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
+import String
 import Util
+import Validate exposing (Validator)
 
 
 type Route
@@ -292,7 +295,7 @@ viewMetaRoute state =
     div []
         [ p [] [ text "Enter the details of the Commemorative Resolution below" ]
         , viewMeta state
-        , button [ onClick (SetActiveRoute Clauses), class "pull-right" ] [ text "Continue" ]
+        , lazy (viewNextButton validateMeta (SetActiveRoute Clauses) "Continue") state.doc
         ]
 
 
@@ -311,7 +314,7 @@ viewClauseRoute state =
             ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
-        , button [ onClick DoPreview, class "pull-right" ] [ text "Generate PDF" ]
+        , lazy (viewNextButton validateClauses DoPreview "Generate PDF") state.doc
         ]
 
 
@@ -469,3 +472,60 @@ getClauseTypeFromDisplayName doc displayName =
         |> List.filter (\( _, clauseTypeDesc ) -> clauseTypeDesc.displayName == displayName)
         |> List.map fst
         |> List.head
+
+
+viewNextButton : Validator String Doc.Model.Model -> Msg -> String -> Doc.Model.Model -> Html Msg
+viewNextButton validate onClickValidMsg btnText doc =
+    let
+        errors =
+            validate doc
+    in
+        button
+            [ classList
+                [ ( "pull-right", True )
+                , ( "usa-button-disabled", not <| List.isEmpty errors )
+                ]
+            , onClick onClickValidMsg
+            ]
+            [ text btnText ]
+
+
+validateMeta : Validator String Doc.Model.Model
+validateMeta =
+    Validate.all
+        [ .title >> Validate.ifBlank "Please enter a title."
+        , .meetingDate >> Validate.ifNothing "Please choose a meeting date."
+        , .sponsors >> Validate.ifEmptyDict "Please choose at least one sponsor."
+        ]
+
+
+validateClauses : Validator String Doc.Model.Model
+validateClauses =
+    Validate.all
+        [ .clauses >> Validate.ifInvalid (not << validateClauseTypes) "Please enter at least one of each clause type."
+        ]
+
+
+validateClauseTypes : Dict comparable Doc.Model.Clause -> Bool
+validateClauseTypes clauses =
+    let
+        foldFunc _ clause acc =
+            if Exts.Dict.getWithDefault False clause.ctype acc then
+                acc
+            else if not (String.isEmpty clause.content) then
+                Dict.insert clause.ctype True acc
+            else
+                acc
+    in
+        clauses
+            |> Dict.foldl foldFunc Dict.empty
+            |> dictKeysExist
+                [ "Whereas"
+                , "BeItResolved"
+                ]
+
+
+dictKeysExist : List comparable -> Dict comparable Bool -> Bool
+dictKeysExist requireds dict =
+    List.map (flip Dict.member dict) requireds
+        |> List.all ((==) True)
