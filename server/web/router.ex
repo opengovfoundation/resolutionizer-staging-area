@@ -18,7 +18,7 @@ defmodule Resolutionizer.Router do
   scope "/api/v1", Resolutionizer do
     pipe_through :api
 
-    resources "/document", DocumentController
+    resources "/document", DocumentController, only: [:create]
   end
 
   scope "/", Resolutionizer do
