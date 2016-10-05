@@ -6,11 +6,15 @@
 , dbPort ? 5432
 , phoenixPort ? 4000
 , domainName
+, s3BucketName
+# , awsAppAccessKeyId
+# , awsAppAccessSecretKey
 , ...
 }:
 
 let
   dbResourceName = dbName + "-db";
+  iamRoleName = s3BucketName + "access";
 in {
   network.description = "resolutionizer";
 
@@ -30,6 +34,7 @@ in {
           deployment.ec2.securityGroups = [ "default" resources.ec2SecurityGroups.resolutionizer-group ];
           deployment.ec2.keyPair = resources.ec2KeyPairs.resolutionizer-keys;
           deployment.ec2.elasticIPv4 = resources.elasticIPs.resolutionizer-ip;
+          deployment.ec2.instanceProfile = iamRoleName;
 
           networking.hostName = "resolutionizer";
           networking.firewall.allowedTCPPorts = [ 22 80 443 ];
@@ -40,6 +45,8 @@ in {
             PGPASSWORD=${dbPass}
             PGDATABASE=${dbName}
             PGPORT=${toString dbPort}
+            # AWS_ACCESS_KEY_ID=${awsAppAccessKeyId}
+            # AWS_SECRET_ACCESS_KEY=${awsAppAccessSecretKey}
           '';
 
           environment.systemPackages = [ serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
@@ -188,4 +195,37 @@ in {
     port = dbPort;
     engine = "postgres";
   };
+
+  resources.s3Buckets.${s3BucketName} = {
+    inherit region accessKeyId;
+  };
+
+  resources.iamRoles.${iamRoleName} = {
+    inherit region accessKeyId;
+    policy = ''
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:s3:::${s3BucketName}"
+            ]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:*"
+            ],
+            "Resource": [
+              "arn:aws:s3:::${s3BucketName}/*"
+            ]
+          }
+        ]
+      }
+    '';
+  }
 }
