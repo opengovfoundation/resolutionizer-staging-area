@@ -14,13 +14,13 @@ defmodule Resolutionizer.DocResult do
 
   # Define a thumbnail transformation:
   def transform(:preview, _) do
-    # TODO: This isn't resulting in a correct conversion
-    {:convert, fn(input, output) -> "-density 150 -quality 90 -format jpg #{input}[0] #{output}" end}
+    {:convert, fn(input, output) ->
+      "-density 150 -strip #{input} +append -quality 100 -background white -flatten png:#{output}"
+    end, :png}
   end
 
   # Override the persisted filenames:
-  def filename(:original, {_file, _scope}), do: "result.pdf"
-  def filename(_, {_file, _scope}), do: "result"
+  def filename(version, _), do: version
 
   # Override the storage directory:
   def storage_dir(_version, {_file, scope}) do
