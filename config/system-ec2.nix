@@ -46,6 +46,7 @@ in {
 
           nixpkgs.config.allowUnfree = true;
           fonts.fonts = [ pkgs.corefonts ];
+          fonts.fontconfig.ultimate.enable = false;
 
           services.nginx.enable = true;
           services.nginx.httpConfig = ''
