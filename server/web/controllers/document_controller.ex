@@ -61,8 +61,7 @@ defmodule Resolutionizer.DocumentController do
     # TODO: delete document from tmp in either case
     case Repo.update(changeset) do
       {:ok, new_document} -> render(conn, "show.json", [document: new_document])
-      {:error, changeset} ->
-        Plug.Conn.send_resp(conn, 500, "file upload error")
+      {:error, _} -> Plug.Conn.send_resp(conn, 500, "file upload error")
     end
   end
 
