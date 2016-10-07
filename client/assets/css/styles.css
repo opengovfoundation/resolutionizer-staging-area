@@ -137,6 +137,11 @@ legend {
     display: block;
 }
 
+img.document-preview-image {
+    max-height: 75vh;
+    border: 1px solid #ccc;
+}
+
 .center-block {
     display: block;
     margin-left: auto;
