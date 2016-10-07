@@ -21,16 +21,21 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    div [ class "resolutionizer-header", attribute "role" "banner" ]
-        [ div [ class "logo" ]
-            [ em [ class "logo-text" ]
-                [ a [ href "/" ]
-                    [ span [ class "app-name" ] [ text "AssemblyWorks" ]
-                    , text "City Of Chicago Commemorative Resolutions"
+    case model.activeState of
+        Login _ ->
+            div [] []
+
+        _ ->
+            div [ class "app-header", attribute "role" "banner" ]
+                [ div [ class "logo" ]
+                    [ em [ class "logo-text" ]
+                        [ a [ href "/" ]
+                            [ span [ class "app-name" ] [ text "AssemblyWorks" ]
+                            , text "City Of Chicago Commemorative Resolutions"
+                            ]
+                        ]
                     ]
                 ]
-            ]
-        ]
 
 
 viewState : Model -> Html Msg
