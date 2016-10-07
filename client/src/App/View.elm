@@ -31,7 +31,7 @@ viewHeader model =
                     [ em [ class "logo-text" ]
                         [ a [ href "/" ]
                             [ span [ class "app-name" ] [ text "AssemblyWorks" ]
-                            , text "City Of Chicago Commemorative Resolutions"
+                            , text "City of Chicago Commemorative Resolutions"
                             ]
                         ]
                     ]
@@ -57,8 +57,7 @@ viewFooter model =
         [ div [ class "pull-right" ]
             [ text "Built by "
             , a
-                [ href
-                    "https://opengovfoundation.org"
+                [ href "https://opengovfoundation.org"
                 ]
                 [ text "The OpenGov Foundation" ]
             ]
