@@ -7,7 +7,6 @@ defmodule Resolutionizer.DocumentController do
 
   alias Resolutionizer.PDF
   alias Resolutionizer.Document
-  alias Resolutionizer.DocResult
 
   @doc """
   Create a new document in the database, generates the resulting PDF and
