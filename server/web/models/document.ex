@@ -5,11 +5,16 @@ defmodule Resolutionizer.Document do
   """
 
   use Resolutionizer.Web, :model
+  use Arc.Ecto.Schema
+
+  # Arc Uploader
+  alias Resolutionizer.DocResult
 
   schema "documents" do
     field :title, :string
     field :template_name, :string
     field :data, :map
+    field :file, DocResult.Type
 
     timestamps()
   end
@@ -20,6 +25,7 @@ defmodule Resolutionizer.Document do
   def changeset(struct, params \\ %{}) do
     struct
     |> cast(params, [:title, :template_name, :data])
+    |> cast_attachments(params, [:file])
     |> validate_required([:title, :template_name, :data])
   end
 
