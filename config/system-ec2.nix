@@ -13,7 +13,7 @@
 let
   dbResourceName = dbName + "-db";
   s3BucketResourceName = s3BucketName + "-bucket";
-  iamRoleName = s3BucketResourceName + "access";
+  iamRoleName = s3BucketResourceName + "-access";
 in {
   network.description = "resolutionizer";
 
@@ -135,7 +135,7 @@ in {
             email = "developers@opengovfoundation.org";
             group = "resolutionizer";
             allowKeysForGroup = true;
-            postRun = "systemctl restart resolutionizer-server";
+            postRun = "systemctl reload nginx";
           };
 
           services.xserver.enable = true;
@@ -201,6 +201,7 @@ in {
 
   resources.iamRoles.${iamRoleName} = {
     inherit region accessKeyId;
+    name = iamRoleName;
     policy = ''
       {
         "Version": "2012-10-17",
