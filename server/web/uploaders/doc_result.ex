@@ -4,6 +4,7 @@ defmodule Resolutionizer.DocResult do
   """
 
   use Arc.Definition
+  use Arc.Ecto.Definition
 
   @versions [:original, :preview]
 
@@ -18,9 +19,6 @@ defmodule Resolutionizer.DocResult do
       "-density 150 -strip #{input} +append -quality 100 -background white -flatten png:#{output}"
     end, :png}
   end
-
-  # Override the persisted filenames:
-  def filename(version, _), do: version
 
   # Override the storage directory:
   def storage_dir(_version, {_file, scope}) do

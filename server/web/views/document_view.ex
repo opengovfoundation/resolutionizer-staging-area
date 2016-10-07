@@ -14,7 +14,7 @@ defmodule Resolutionizer.DocumentView do
         title: document.title,
         template_name: document.template_name,
         data: document.data,
-        urls: DocResult.urls({"result", document}, signed: true)
+        urls: DocResult.urls({document.file, document}, signed: true)
       }
     }
   end

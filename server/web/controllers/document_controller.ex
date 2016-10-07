@@ -51,8 +51,16 @@ defmodule Resolutionizer.DocumentController do
 
   # Uploads the document to S3
   defp attach_document_pdf(conn, document, pdf) do
-    case DocResult.store({pdf.path, document}) do
-      {:ok, _file} -> render(conn, "show.json", [document: document])
+    changeset = Document.changeset(document, %{
+      file: %{
+        content_type: "application/pdf",
+        filename: Path.basename(pdf.path),
+        path: pdf.path
+      }
+    })
+
+    case Repo.update(changeset) do
+      {:ok, new_document} -> render(conn, "show.json", [document: new_document])
       {:error, error} -> Plug.Conn.send_resp(conn, 500, error)
     end
   end

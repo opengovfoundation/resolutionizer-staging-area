@@ -19,9 +19,9 @@ defmodule Resolutionizer.DocumentControllerTest do
 
   test_with_mock "successfully creates a new document", %{conn: conn},
   DocResult, [], [
-   store: fn(_) -> {:ok, nil}  end,
-   urls: fn(file_and_scope, opts) -> doc_result_urls(file_and_scope, opts) end
- ] do
+    store: fn(_) -> {:ok, nil}  end,
+    urls: fn(file_and_scope, opts) -> doc_result_urls(file_and_scope, opts) end
+  ] do
     conn = post(conn, document_path(conn, :create), document: @valid_attrs)
     document = Repo.get_by(Document, @valid_attrs)
 
@@ -31,7 +31,7 @@ defmodule Resolutionizer.DocumentControllerTest do
   defp json_response_for_document(document) do
     # Convert the DocResult urls for this doc into string-keyed map
     urls = for {key, val} <-
-      DocResult.urls({"result", document}, nil),
+      DocResult.urls({document.file, document}, nil),
       into: %{},
       do: {Atom.to_string(key), val}
 
@@ -47,8 +47,8 @@ defmodule Resolutionizer.DocumentControllerTest do
 
   def doc_result_urls({file, document}, _opts) do
     %{
-      original: "#{document.id}/#{file}.pdf",
-      preview: "#{document.id}/#{file}.jpg"
+      original: "#{document.id}/#{file.file_name}.pdf",
+      preview: "#{document.id}/#{file.file_name}.png"
     }
   end
 
