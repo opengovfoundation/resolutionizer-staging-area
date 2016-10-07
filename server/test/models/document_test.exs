@@ -2,7 +2,6 @@ defmodule Resolutionizer.DocumentTest do
   use Resolutionizer.ModelCase
 
   alias Resolutionizer.Document
-  alias Resolutionizer.DocResult
 
   @valid_attrs %{
     data: %{ "foo" => "bar" },
