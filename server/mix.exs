@@ -39,6 +39,7 @@ defmodule Resolutionizer.Mixfile do
      {:cowboy, "~> 1.0"},
      {:dogma, "~> 0.1", only: [:test, :dev]},
      {:timex, "~> 3.0"},
+     {:ex_machina, "~> 1.0"},
      {:distillery, "~> 0.9"},
      {:arc, "~> 0.5.2"},
      {:arc_ecto, "~> 0.4.4"},
