@@ -6,11 +6,14 @@
 , dbPort ? 5432
 , phoenixPort ? 4000
 , domainName
+, s3BucketName
 , ...
 }:
 
 let
   dbResourceName = dbName + "-db";
+  s3BucketResourceName = s3BucketName + "-bucket";
+  iamRoleName = s3BucketResourceName + "-access";
 in {
   network.description = "resolutionizer";
 
@@ -30,6 +33,7 @@ in {
           deployment.ec2.securityGroups = [ "default" resources.ec2SecurityGroups.resolutionizer-group ];
           deployment.ec2.keyPair = resources.ec2KeyPairs.resolutionizer-keys;
           deployment.ec2.elasticIPv4 = resources.elasticIPs.resolutionizer-ip;
+          deployment.ec2.instanceProfile = iamRoleName;
 
           networking.hostName = "resolutionizer";
           networking.firewall.allowedTCPPorts = [ 22 80 443 ];
@@ -40,6 +44,9 @@ in {
             PGPASSWORD=${dbPass}
             PGDATABASE=${dbName}
             PGPORT=${toString dbPort}
+            S3_BUCKET=${s3BucketName}
+            APP_URL=${domainName}
+            AWS_REGION=${region}
           '';
 
           environment.systemPackages = [ serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
@@ -130,7 +137,7 @@ in {
             email = "developers@opengovfoundation.org";
             group = "resolutionizer";
             allowKeysForGroup = true;
-            postRun = "systemctl restart resolutionizer-server";
+            postRun = "systemctl reload nginx";
           };
 
           services.xserver.enable = true;
@@ -187,5 +194,40 @@ in {
     masterPassword = dbPass;
     port = dbPort;
     engine = "postgres";
+  };
+
+  resources.s3Buckets.${s3BucketResourceName} = {
+    inherit region accessKeyId;
+    name = s3BucketName;
+  };
+
+  resources.iamRoles.${iamRoleName} = {
+    inherit region accessKeyId;
+    name = iamRoleName;
+    policy = ''
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:s3:::${s3BucketName}"
+            ]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:*"
+            ],
+            "Resource": [
+              "arn:aws:s3:::${s3BucketName}/*"
+            ]
+          }
+        ]
+      }
+    '';
   };
 }

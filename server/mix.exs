@@ -20,7 +20,7 @@ defmodule Resolutionizer.Mixfile do
     [mod: {Resolutionizer, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
                     :phoenix_ecto, :postgrex, :timex, :ex_machina, :ex_aws,
-                    :httpoison, :arc_ecto]]
+                    :poison, :arc, :arc_ecto, :hackney, :sweet_xml, :gen_stage]]
   end
 
   # Specifies which paths to compile per environment.
@@ -41,11 +41,12 @@ defmodule Resolutionizer.Mixfile do
      {:timex, "~> 3.0"},
      {:ex_machina, "~> 1.0"},
      {:distillery, "~> 0.9"},
-     {:arc, "~> 0.5.2"},
+     {:arc, "~> 0.6.0-rc1", override: true},
      {:arc_ecto, "~> 0.4.4"},
-     {:ex_aws, "~> 0.5.0"},
-     {:httpoison, "~> 0.9.2"},
-     {:poison, "~> 2.2.0"},
+     {:ex_aws, "~> 1.0.0-rc.1"},
+     {:hackney, "~> 1.5"},
+     {:poison, "~> 2.0"},
+     {:sweet_xml, "~> 0.5"},
      {:mock, "~> 0.1.1", only: :test}]
   end
 

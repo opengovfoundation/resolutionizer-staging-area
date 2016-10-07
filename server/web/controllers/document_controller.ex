@@ -30,7 +30,7 @@ defmodule Resolutionizer.DocumentController do
     # Save the doc in the Datbase
     case Repo.insert(changeset) do
       {:ok, document} -> generate_document_pdf(conn, document)
-      {:error, changeset} -> Plug.Conn.send_resp(conn, 400, changeset)
+      {:error, _} -> Plug.Conn.send_resp(conn, 400, "invalid parameters error")
     end
   end
 
@@ -58,9 +58,10 @@ defmodule Resolutionizer.DocumentController do
       }
     })
 
+    # TODO: delete document from tmp in either case
     case Repo.update(changeset) do
       {:ok, new_document} -> render(conn, "show.json", [document: new_document])
-      {:error, error} -> Plug.Conn.send_resp(conn, 500, error)
+      {:error, _} -> Plug.Conn.send_resp(conn, 500, "file upload error")
     end
   end
 
