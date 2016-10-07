@@ -8,7 +8,7 @@ use Mix.Config
 # meaningful, we use this information when generating URLs.
 config :resolutionizer, Resolutionizer.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [host: "example.com", port: 80],
+  url: [host: {:system, "APP_URL"}, port: 80],
   server: true,
   root: ".",
   version: Mix.Project.config[:version]
@@ -22,5 +22,8 @@ config :resolutionizer, Resolutionizer.Repo,
 
 config :arc,
   bucket: {:system, "S3_BUCKET"}
+
+config :ex_aws,
+  region: {:system, "AWS_REGION"}
 
 import_config "prod.secret.exs"

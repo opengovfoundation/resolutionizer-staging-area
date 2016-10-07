@@ -20,7 +20,7 @@ defmodule Resolutionizer.Mixfile do
     [mod: {Resolutionizer, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
                     :phoenix_ecto, :postgrex, :timex, :ex_machina, :ex_aws,
-                    :httpoison, :arc_ecto]]
+                    :httpoison, :arc, :arc_ecto]]
   end
 
   # Specifies which paths to compile per environment.

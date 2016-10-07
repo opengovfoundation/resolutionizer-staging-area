@@ -1,4 +1,4 @@
-{ gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf
+{ gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf, imagemagickBig, ghostscript
 }:
 let
   cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
@@ -11,7 +11,7 @@ in stdenv.mkDerivation rec {
   version = "0.1.0.0";
   src = builtins.filterSource cleanSource ./.;
   buildInputs = [
-    gawk elixir makeWrapper wkhtmltopdf
+    elixir makeWrapper
   ];
 
   # Elixir complains otherwise
@@ -25,6 +25,7 @@ in stdenv.mkDerivation rec {
     mix do \
       local.hex --force, \
       local.rebar --force, \
+      deps.get, \
       release --env=prod
   '';
 
@@ -35,7 +36,7 @@ in stdenv.mkDerivation rec {
 
     mv $out/bin/resolutionizer $out/bin/resolutionizer-unwrapped
     makeWrapper $out/bin/resolutionizer-unwrapped $out/bin/resolutionizer \
-      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf erlang ]}:$PATH'
+      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf erlang imagemagickBig ghostscript ]}:$PATH'
 
     sed -i -e "s|awk|${gawk}/bin/awk|" $out/releases/0.0.1/resolutionizer.sh
     sed -i -e "s|which|${which}/bin/which|" $out/releases/0.0.1/resolutionizer.sh

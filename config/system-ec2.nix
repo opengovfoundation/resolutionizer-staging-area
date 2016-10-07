@@ -45,6 +45,8 @@ in {
             PGDATABASE=${dbName}
             PGPORT=${toString dbPort}
             S3_BUCKET=${s3BucketName}
+            APP_URL=${domainName}
+            AWS_REGION=${region}
           '';
 
           environment.systemPackages = [ serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
