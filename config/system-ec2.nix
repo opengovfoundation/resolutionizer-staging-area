@@ -7,14 +7,13 @@
 , phoenixPort ? 4000
 , domainName
 , s3BucketName
-# , awsAppAccessKeyId
-# , awsAppAccessSecretKey
 , ...
 }:
 
 let
   dbResourceName = dbName + "-db";
-  iamRoleName = s3BucketName + "access";
+  s3BucketResourceName = s3BucketName + "-bucket";
+  iamRoleName = s3BucketResourceName + "access";
 in {
   network.description = "resolutionizer";
 
@@ -45,8 +44,7 @@ in {
             PGPASSWORD=${dbPass}
             PGDATABASE=${dbName}
             PGPORT=${toString dbPort}
-            # AWS_ACCESS_KEY_ID=${awsAppAccessKeyId}
-            # AWS_SECRET_ACCESS_KEY=${awsAppAccessSecretKey}
+            S3_BUCKET=${s3BucketName}
           '';
 
           environment.systemPackages = [ serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
@@ -196,8 +194,9 @@ in {
     engine = "postgres";
   };
 
-  resources.s3Buckets.${s3BucketName} = {
+  resources.s3Buckets.${s3BucketResourceName} = {
     inherit region accessKeyId;
+    name = s3BucketName;
   };
 
   resources.iamRoles.${iamRoleName} = {
@@ -227,5 +226,5 @@ in {
         ]
       }
     '';
-  }
+  };
 }
