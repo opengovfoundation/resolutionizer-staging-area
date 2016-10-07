@@ -6,52 +6,62 @@ defmodule Resolutionizer.DocumentController do
   use Resolutionizer.Web, :controller
 
   alias Resolutionizer.PDF
+  alias Resolutionizer.Document
 
   @doc """
-  Creates a new PDF.
+  Create a new document in the database, generates the resulting PDF and
+  uploads it to S3. Response JSON contains PDF and preview JPG URLs.
 
-  POST /api/v1/document/pdf
+  POST /api/v1/document
   {
     "document": {
+      "title": "Title of the document",
       "template_name": "DocumentType",
       "data": {
         // Data that is passed to template
       }
     }
+
   }
   """
-  def pdf(conn), do: Plug.Conn.send_resp(conn, 400, "Bad request")
-  def pdf(conn, %{ "document" => document_params }) do
+  def create(conn, %{"document" => document_params}) do
+    changeset = Document.changeset(%Document{}, document_params)
+
+    # Save the doc in the Datbase
+    case Repo.insert(changeset) do
+      {:ok, document} -> generate_document_pdf(conn, document)
+      {:error, changeset} -> Plug.Conn.send_resp(conn, 400, changeset)
+    end
+  end
+
+  # Creates the PDF for the document locally
+  defp generate_document_pdf(conn, document) do
     result =
       PDF.start
-      |> PDF.template(document_params["template_name"])
-      |> PDF.data(document_params["data"])
+      |> PDF.template(document.template_name)
+      |> PDF.data(document.data)
       |> PDF.generate
 
     case result do
-      {:ok, pdf} ->
-        conn
-        |> put_resp_header("content-type", "application/json")
-        |> Plug.Conn.send_resp(200, Poison.encode!(%{id: Path.basename(pdf.path, ".pdf")}))
+      {:ok, pdf} -> attach_document_pdf(conn, document, pdf)
       {:error, error} -> Plug.Conn.send_resp(conn, 500, error)
     end
   end
 
-  @doc """
-  Download a generated PDF.
+  # Uploads the document to S3
+  defp attach_document_pdf(conn, document, pdf) do
+    changeset = Document.changeset(document, %{
+      file: %{
+        content_type: "application/pdf",
+        filename: Path.basename(pdf.path),
+        path: pdf.path
+      }
+    })
 
-  GET /api/v1/document/:id/download/pdf
-
-  TODO: For now, :id is the filename base, in the future it should be a model ID
-  """
-  def download_pdf(conn), do: Plug.Conn.send_resp(conn, 400, "Bad request")
-  def download_pdf(conn, %{ "id" => id }) do
-    case PDF.path(id) do
-      {:ok, path} ->
-        conn
-        |> put_resp_header("content-type", "application/pdf")
-        |> Plug.Conn.send_file(200, path)
-      {:error, msg} -> Plug.Conn.send_resp(conn, 400, msg)
+    case Repo.update(changeset) do
+      {:ok, new_document} -> render(conn, "show.json", [document: new_document])
+      {:error, error} -> Plug.Conn.send_resp(conn, 500, error)
     end
   end
+
 end

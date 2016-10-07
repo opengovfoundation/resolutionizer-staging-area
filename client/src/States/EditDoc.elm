@@ -16,6 +16,7 @@ import Html.Lazy exposing (lazy, lazy2)
 import Http
 import Inputs.DateSelector
 import Json.Decode as Decode
+import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
@@ -38,7 +39,14 @@ type alias State =
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
-    , previewRequest : RemoteData.WebData String
+    , previewRequest : RemoteData.WebData DocumentCreateResponse
+    }
+
+
+type alias DocumentCreateResponse =
+    { id : Int
+    , title : String
+    , urls : Dict String String
     }
 
 
@@ -56,7 +64,7 @@ type Msg
     | NoOp
     | RequestPdf
     | DoPreview
-    | PreviewResponse (RemoteData.WebData String)
+    | PreviewResponse (RemoteData.WebData DocumentCreateResponse)
 
 
 init : Doc.Model.Model -> ( State, Cmd Msg )
@@ -243,6 +251,7 @@ update msg state =
                 encodeDoc doc =
                     Encode.object
                         [ ( "template_name", Encode.string "Resolution" )
+                        , ( "title", Encode.string doc.title )
                         , ( "data", encodeDocData doc )
                         ]
 
@@ -260,7 +269,7 @@ update msg state =
                         ]
 
                 cmd =
-                    Exts.Http.postJson (Decode.at [ "id" ] Decode.string) "/api/v1/document/pdf/" (Http.string body)
+                    Exts.Http.postJson (Decode.at [ "document" ] documentCreateResponseDecoder) "/api/v1/document" (Http.string body)
                         |> RemoteData.asCmd
                         |> Cmd.map PreviewResponse
             in
@@ -268,6 +277,14 @@ update msg state =
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
+
+
+documentCreateResponseDecoder : Decode.Decoder DocumentCreateResponse
+documentCreateResponseDecoder =
+    Decode.decode DocumentCreateResponse
+        |> Decode.required "id" Decode.int
+        |> Decode.required "title" Decode.string
+        |> Decode.required "urls" (Decode.dict Decode.string)
 
 
 view : State -> Html Msg
@@ -314,7 +331,7 @@ viewClauseRoute state =
             ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
-        , lazy (viewNextButton validateClauses DoPreview "Generate PDF") state.doc
+        , lazy (viewNextButton validateClauses DoPreview "Preview") state.doc
         ]
 
 
@@ -325,7 +342,7 @@ viewPreviewRoute state =
         ]
 
 
-viewPreviewRequest : RemoteData.WebData String -> Html Msg
+viewPreviewRequest : RemoteData.WebData DocumentCreateResponse -> Html Msg
 viewPreviewRequest request =
     case request of
         RemoteData.NotAsked ->
@@ -337,8 +354,11 @@ viewPreviewRequest request =
         RemoteData.Failure err ->
             text "Failed"
 
-        RemoteData.Success str ->
-            a [ class "usa-button usa-button-big", href ("/api/v1/document/" ++ str ++ "/download/pdf/") ] [ text "View PDF" ]
+        RemoteData.Success { id, urls } ->
+            div []
+                [ img [ class "document-preview-image img-responsive", src (Maybe.withDefault "" <| Dict.get "preview" urls) ] []
+                , a [ class "usa-button", href (Maybe.withDefault "" <| Dict.get "original" urls) ] [ text "Download PDF" ]
+                ]
 
 
 viewMeta : State -> Html Msg

@@ -19,3 +19,8 @@ config :logger, level: :info
 config :resolutionizer, Resolutionizer.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: {:system, "DBURL"}
+
+config :arc,
+  bucket: {:system, "S3_BUCKET"}
+
+import_config "prod.secret.exs"
