@@ -6,12 +6,12 @@ import Exts.Date
 import Exts.Dict
 import Exts.Html.Events
 import Exts.Http
+import Exts.Maybe
 import Exts.RemoteData as RemoteData
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2)
 import Http
 import Inputs.DateSelector
@@ -34,12 +34,18 @@ type Route
 type alias State =
     { doc : Doc.Model.Model
     , dateSelector : Inputs.DateSelector.Model
-    , selectedNewSponsor : Maybe String
+    , sponsorInputs : Dict Int SponsorInput
     , selectedNewClauseType : Doc.Model.ClauseType
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
     , previewRequest : RemoteData.WebData DocumentCreateResponse
+    }
+
+
+type alias SponsorInput =
+    { value : Maybe String
+    , pos : Int
     }
 
 
@@ -57,9 +63,8 @@ type Msg
     | UpdateClause Int String
     | DeleteClause Int
     | SetActiveRoute Route
-    | NewSponsor
-    | UpdateSponsor Int (Maybe String)
-    | SetSelectedSponsor (Maybe String)
+    | NewSponsorInput
+    | SponsorInputChange Int (Maybe String)
     | DateSelectorMsg Inputs.DateSelector.Msg
     | NoOp
     | RequestPdf
@@ -72,12 +77,24 @@ init doc =
     let
         ( dateSelectorModel, dateSelectorCmd ) =
             Inputs.DateSelector.init
+
+        uidAfterDoc =
+            Dict.size doc.clauses + Dict.size doc.sponsors
+
+        initSponsorInputs =
+            Dict.fromList <|
+                List.indexedMap
+                    (\idx val ->
+                        ( uidAfterDoc + idx, val )
+                    )
+                    [ { value = Nothing, pos = 1 }
+                    ]
     in
         ( { doc = doc
           , dateSelector = dateSelectorModel
-          , selectedNewSponsor = List.head doc.validSponsors
+          , sponsorInputs = initSponsorInputs
           , selectedNewClauseType = doc.defaultClauseType
-          , uid = Dict.size doc.clauses + Dict.size doc.sponsors
+          , uid = uidAfterDoc + Dict.size initSponsorInputs
           , activeRoute = Meta
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
@@ -171,54 +188,49 @@ update msg state =
         SetActiveRoute route ->
             ( { state | activeRoute = route }, Cmd.none )
 
-        SetSelectedSponsor sponsor ->
-            ( { state | selectedNewSponsor = sponsor }, Cmd.none )
+        NewSponsorInput ->
+            ( { state
+                | uid = state.uid + 1
+                , sponsorInputs = Dict.insert state.uid ({ value = Nothing, pos = (Dict.size state.doc.sponsors) + 1 }) state.sponsorInputs
+              }
+            , Cmd.none
+            )
 
-        NewSponsor ->
+        SponsorInputChange id mSponsorName ->
             let
-                doc =
-                    state.doc
+                updateSponsorInput state =
+                    { state | sponsorInputs = Dict.update id (Maybe.map (\s -> { s | value = mSponsorName })) state.sponsorInputs }
 
-                newDoc selectedNewSponsor =
-                    -- TODO: display message to user stating the sponsor is
-                    -- already present
-                    case List.member selectedNewSponsor <| List.map .name <| Dict.values doc.sponsors of
-                        True ->
-                            doc
+                updateDocSponsors state =
+                    case mSponsorName of
+                        Nothing ->
+                            { state | doc = deleteSponsor id state.doc }
 
-                        False ->
-                            { doc | sponsors = Dict.insert state.uid (Doc.Model.newSponsor ((Dict.size doc.sponsors) + 1) selectedNewSponsor) doc.sponsors }
-            in
-                case state.selectedNewSponsor of
-                    Nothing ->
-                        ( state, Cmd.none )
+                        Just sponsorName ->
+                            { state | doc = insertOrUpdateSponsor sponsorName (Dict.get id state.sponsorInputs) state.doc }
 
-                    Just selectedNewSponsor ->
-                        ( { state
-                            | uid = state.uid + 1
-                            , doc = newDoc selectedNewSponsor
-                          }
-                        , Cmd.none
-                        )
-
-        UpdateSponsor id mSponsorName ->
-            let
                 updateSponsor sponsorName =
                     Maybe.map (\s -> { s | name = sponsorName })
 
-                doc =
-                    state.doc
+                insertOrUpdateSponsor sponsorName mSponsorInput doc =
+                    if Dict.member id doc.sponsors then
+                        { doc | sponsors = Dict.update id (updateSponsor sponsorName) doc.sponsors }
+                    else
+                        case mSponsorInput of
+                            Nothing ->
+                                doc
 
-                newDoc sponsorName =
-                    { doc | sponsors = Dict.update id (updateSponsor sponsorName) state.doc.sponsors }
+                            Just sponsorInput ->
+                                { doc | sponsors = Dict.insert id (Doc.Model.newSponsor sponsorInput.pos sponsorName) doc.sponsors }
+
+                deleteSponsor id doc =
+                    { doc | sponsors = Dict.remove id doc.sponsors }
             in
-                case mSponsorName of
-                    -- TODO: should this mean delete sponsor?
-                    Nothing ->
-                        ( state, Cmd.none )
-
-                    Just sponsorName ->
-                        ( { state | doc = newDoc sponsorName }, Cmd.none )
+                ( state
+                    |> updateSponsorInput
+                    |> updateDocSponsors
+                , Cmd.none
+                )
 
         DateSelectorMsg msg' ->
             let
@@ -310,7 +322,7 @@ viewRoute state =
 viewMetaRoute : State -> Html Msg
 viewMetaRoute state =
     div []
-        [ p [] [ text "Enter the details of the Commemorative Resolution below" ]
+        [ p [] [ text "Enter the details of the Commemorative Resolution below." ]
         , viewMeta state
         , lazy (viewNextButton validateMeta (SetActiveRoute Clauses) "Continue") state.doc
         ]
@@ -381,35 +393,52 @@ viewSponsors state =
     fieldset [ class "usa-grid-full" ]
         [ legend [ class "usa-width-one-sixth" ] [ text "Sponsors" ]
         , div [ class "usa-width-five-sixths" ]
-            [ viewSponsorSelectors state.doc
-            , div [ class "add-selector" ]
-                [ sponsorSelect state.doc state.selectedNewSponsor SetSelectedSponsor
-                , button [ class "usa-button-plain add", onClick (NewSponsor) ] []
-                ]
+            [ viewSponsorSelectors state
+            , button [ class "usa-button-plain add-sponsor", onClick NewSponsorInput ] [ text "Add sponsor" ]
             ]
         ]
 
 
-viewSponsorSelectors : Doc.Model.Model -> Html Msg
-viewSponsorSelectors doc =
-    div [] <|
-        List.map (\( id, sponsor ) -> sponsorSelect doc (Just sponsor.name) (UpdateSponsor id)) <|
-            List.sortBy (.pos << snd) <|
-                Dict.toList <|
-                    doc.sponsors
+viewSponsorSelectors : State -> Html Msg
+viewSponsorSelectors state =
+    lazy
+        (div []
+            << List.map (\( id, sponsorInput ) -> sponsorSelect state.doc sponsorInput.value (SponsorInputChange id))
+            << List.sortBy (.pos << snd)
+            << Dict.toList
+        )
+        state.sponsorInputs
 
 
 sponsorSelect : Doc.Model.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
-sponsorSelect doc selectedSponsor toMsg =
-    select [ Exts.Html.Events.onSelect toMsg ] <|
-        List.map
-            (\sponsor ->
-                option
-                    [ selected ((Just sponsor) == selectedSponsor)
-                    ]
-                    [ text sponsor ]
-            )
-            (doc.validSponsors)
+sponsorSelect doc mSelectedSponsor toMsg =
+    let
+        alreadyPresentSponsorNames =
+            List.map .name <| Dict.values doc.sponsors
+
+        shouldKeepSponsor sponsorName =
+            if (Just sponsorName) == mSelectedSponsor then
+                -- If this sponsor is the one selected for this input, then of
+                -- course, keep them
+                True
+            else
+                -- If this sponsor is *not* the one selected for this input and
+                -- is selected elsewhere, then don't allow them
+                not <| List.member sponsorName alreadyPresentSponsorNames
+
+        nonDuplicateSponsors =
+            List.filter shouldKeepSponsor doc.validSponsors
+    in
+        select [ Exts.Html.Events.onSelect toMsg ] <|
+            (++) [ option [ value "", selected (Exts.Maybe.isNothing mSelectedSponsor) ] [ text "-- Select Sponsor --" ] ] <|
+                List.map
+                    (\sponsor ->
+                        option
+                            [ selected ((Just sponsor) == mSelectedSponsor)
+                            ]
+                            [ text sponsor ]
+                    )
+                    nonDuplicateSponsors
 
 
 viewClauses : Doc.Model.Model -> Html Msg
@@ -435,7 +464,7 @@ viewClause doc clause =
                     , onClick (DeleteClause clause.id)
                     ]
                     []
-                , Keyed.node "textarea"
+                , textarea
                     [ id clauseId
                     , value clause.content
                     , onInput (UpdateClause clause.id)
