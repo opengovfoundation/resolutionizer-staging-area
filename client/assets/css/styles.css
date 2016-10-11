@@ -33,7 +33,7 @@
     padding: 1rem;
     color: gray;
     font-size: 1.3rem;
-    position: absolute;
+    position: fixed;
     bottom: 0;
     right: 0;
 }
@@ -169,6 +169,20 @@ legend {
     font-size: 1.7rem;
     font-weight: 500;
     margin: 0;
+}
+
+.add-sponsor {
+    color: gray;
+}
+
+.add-sponsor:hover,
+.add-sponsor:focus {
+    color: #205493;
+}
+
+.add-sponsor:before {
+    content: '+';
+    margin-right: 5px;
 }
 
 .form-horizontal label {
