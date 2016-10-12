@@ -1,7 +1,7 @@
 module App.Update exposing (..)
 
 import App.Model exposing (..)
-import Doc.Model
+import Doc
 import States.EditDoc
 import States.Login
 
@@ -86,7 +86,7 @@ update msg model =
                                         ( state, Cmd.none )
 
                                     _ ->
-                                        (States.EditDoc.init Doc.Model.emptyDoc)
+                                        (States.EditDoc.init Doc.emptyDoc)
 
                             newActiveState =
                                 EditDoc { editDocState | activeRoute = route' }
@@ -96,7 +96,7 @@ update msg model =
         LoggedIn ->
             let
                 ( editDocState, editDocCmd ) =
-                    (States.EditDoc.init Doc.Model.emptyDoc)
+                    (States.EditDoc.init Doc.emptyDoc)
             in
                 ( { model
                     | activeState = EditDoc editDocState
