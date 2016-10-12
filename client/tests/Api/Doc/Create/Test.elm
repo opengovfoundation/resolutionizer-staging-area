@@ -75,9 +75,6 @@ decodesResponse =
     in
         test "Decodes correctly for create response" <|
             \() ->
-                case Decode.decodeString Api.Doc.Create.responseDecoder input of
-                    Ok value ->
-                        Expect.equal output value
-
-                    Err err ->
-                        Expect.fail err
+                input
+                    |> Decode.decodeString Api.Doc.Create.responseDecoder
+                    |> Expect.equal (Ok output)
