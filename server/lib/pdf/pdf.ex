@@ -25,12 +25,13 @@ defmodule Resolutionizer.PDF do
   """
 
   @doc "Start a new PDF, passing in initial configuration."
+  @spec start(list) :: Config.t
   def start(opts \\ []), do: Config.new(opts)
 
   @doc """
   Set the template used. Templates defined in `./templates/`.
   """
-
+  @spec template(Config.t, String.t) :: Config.t
   def template(%Config{} = config, template_name) when template_name != "" do
     struct(config, [template_name: template_name])
   end
@@ -38,7 +39,7 @@ defmodule Resolutionizer.PDF do
   @doc """
   Set the data to be used in the `.html.eex` template
   """
-
+  @spec data(Config.t, map) :: Config.t
   def data(%Config{} = config, data) do
     struct(config, [data: data])
   end
@@ -48,7 +49,7 @@ defmodule Resolutionizer.PDF do
 
   Returns a result object of either `{:error, reason}` or `{:ok, %PDF.Result{}}`
   """
-
+  @spec generate(Config.t) :: {atom, Result.t}
   def generate(%Config{} = config) do
     with {:ok, loaded_config} <- load_template(config),
          :ok <- check_template(loaded_config),
@@ -107,8 +108,10 @@ defmodule Resolutionizer.PDF do
   @doc """
   Returns the full file path to an existing PDF.
   """
-
+  @spec path(String.t) :: {atom, String.t}
   def path(base), do: path_check("#{System.tmp_dir}/resolutionizer_pdfs/#{base}.pdf")
+
+  @spec path(String.t, String.t) :: {atom, String.t}
   def path(base, dir) do
     path_check("#{dir}/#{base}.pdf")
   end
