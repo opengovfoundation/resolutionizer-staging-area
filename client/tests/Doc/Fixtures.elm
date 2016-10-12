@@ -1,10 +1,10 @@
 module Doc.Fixtures exposing (..)
 
 import Dict
-import Doc.Model
+import Doc
 
 
-emptyDoc : Doc.Model.Model
+emptyDoc : Doc.Model
 emptyDoc =
     { title = ""
     , meetingDate = Nothing
@@ -16,7 +16,7 @@ emptyDoc =
     }
 
 
-clauseTypes : Doc.Model.ClauseInfo
+clauseTypes : Doc.ClauseInfo
 clauseTypes =
     Dict.fromList
         [ ( "Beginning", { displayName = "The Beginning", sortWeight = 1 } )
