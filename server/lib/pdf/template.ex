@@ -4,6 +4,14 @@ defmodule Resolutionizer.PDF.Template do
   access those valid templates by name.
   """
 
+  alias Resolutionizer.PDF
+
+  @type t :: %PDF.Template{
+    file: String.t,
+    fields: list,
+    options: list
+  }
+
   defstruct file: "", fields: [], options: []
 
   @doc """
