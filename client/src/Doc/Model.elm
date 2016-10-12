@@ -68,11 +68,14 @@ emptyDoc =
     }
 
 
-addNewClause : Int -> ClauseType -> Model -> Model
+addNewClause : Int -> ClauseType -> Model -> ( Model, Clause )
 addNewClause id clauseType doc =
     let
+        initialNewClause =
+            newClause id ((Dict.size doc.clauses) + 1) clauseType ""
+
         newClauses =
-            Dict.insert id (newClause id ((Dict.size doc.clauses) + 1) clauseType "") doc.clauses
+            Dict.insert id initialNewClause doc.clauses
                 |> sortClauses
 
         sortClauses clauses =
@@ -100,8 +103,15 @@ addNewClause id clauseType doc =
                 |> Dict.get clauseType
                 |> Maybe.map .sortWeight
                 |> Maybe.withDefault 0
+
+        newDoc =
+            { doc | clauses = newClauses }
+
+        -- looking up the new clause should never fail
+        finalNewClause =
+            Maybe.withDefault initialNewClause <| Dict.get id newClauses
     in
-        { doc | clauses = newClauses }
+        ( newDoc, finalNewClause )
 
 
 newClause : Int -> Int -> ClauseType -> String -> Clause

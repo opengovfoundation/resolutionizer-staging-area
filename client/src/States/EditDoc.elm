@@ -2,6 +2,7 @@ module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRou
 
 import Dict exposing (Dict)
 import Doc.Model
+import Dom
 import Exts.Date
 import Exts.Dict
 import Exts.Html.Events
@@ -21,6 +22,7 @@ import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
+import Task
 import Util
 import Validate exposing (Validator)
 
@@ -152,14 +154,19 @@ update msg state =
 
         NewClause ->
             let
-                newDoc =
+                ( newDoc, newClause ) =
                     Doc.Model.addNewClause state.uid state.selectedNewClauseType state.doc
             in
                 ( { state
                     | uid = state.uid + 1
                     , doc = newDoc
                   }
-                , Cmd.none
+                  -- attempt to move focus to the new input, this could be a
+                  -- little race-y, but seems to work in practice, can always
+                  -- add a delay to mitigate situations where it doesn't work if
+                  -- they come up or actually handle the failure case and retry
+                  -- a few times
+                , Task.perform (always NoOp) (always NoOp) (Dom.focus (clauseHtmlId newClause))
                 )
 
         UpdateClause id content' ->
@@ -454,7 +461,7 @@ viewClause : Doc.Model.Model -> Doc.Model.Clause -> Html Msg
 viewClause doc clause =
     let
         clauseId =
-            "clause" ++ toString clause.id
+            clauseHtmlId clause
     in
         div [ class "clause-wrapper" ]
             [ div [ class "clause" ]
@@ -578,3 +585,8 @@ dictKeysExist : List comparable -> Dict comparable Bool -> Bool
 dictKeysExist requireds dict =
     List.map (flip Dict.member dict) requireds
         |> List.all ((==) True)
+
+
+clauseHtmlId : Doc.Model.Clause -> String
+clauseHtmlId clause =
+    "clause-" ++ toString clause.id
