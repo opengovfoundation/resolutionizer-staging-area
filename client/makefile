@@ -21,6 +21,7 @@ install: ## Puts build files into $(DESTDIR)
 deps: ## Installs project dependencies
 	npm install
 	elm package install --yes
+	cd tests && elm package install --yes
 
 
 clean: clean-elm
@@ -39,6 +40,10 @@ distclean: ## Deletes all non-source code stuff
 
 check-elm: clean-elm $(BUILDDIR)/elm.js
 check-elm: ## Rebuilds application for warnings
+
+
+test:
+	node_modules/.bin/elm-test
 
 
 ELM_FILES := $(shell find src/ -type f -name '*.elm')

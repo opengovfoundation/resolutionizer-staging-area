@@ -1,11 +1,10 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
+import Api.Doc
 import Dict exposing (Dict)
 import Doc.Model
-import Exts.Date
 import Exts.Dict
 import Exts.Html.Events
-import Exts.Http
 import Exts.Maybe
 import Exts.RemoteData as RemoteData
 import Html exposing (..)
@@ -13,11 +12,7 @@ import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
-import Http
 import Inputs.DateSelector
-import Json.Decode as Decode
-import Json.Decode.Pipeline as Decode
-import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
@@ -39,20 +34,13 @@ type alias State =
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
-    , previewRequest : RemoteData.WebData DocumentCreateResponse
+    , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
     }
 
 
 type alias SponsorInput =
     { value : Maybe String
     , pos : Int
-    }
-
-
-type alias DocumentCreateResponse =
-    { id : Int
-    , title : String
-    , urls : Dict String String
     }
 
 
@@ -69,7 +57,7 @@ type Msg
     | NoOp
     | RequestPdf
     | DoPreview
-    | PreviewResponse (RemoteData.WebData DocumentCreateResponse)
+    | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
 init : Doc.Model.Model -> ( State, Cmd Msg )
@@ -153,7 +141,7 @@ update msg state =
         NewClause ->
             let
                 newDoc =
-                    Doc.Model.addNewClause state.uid state.selectedNewClauseType state.doc
+                    Doc.Model.addNewClause state.uid state.selectedNewClauseType "" state.doc
             in
                 ( { state
                     | uid = state.uid + 1
@@ -252,51 +240,10 @@ update msg state =
             ( state, Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
 
         RequestPdf ->
-            let
-                -- TODO: all of this should be broken out into a Api.Document module or similar
-                body =
-                    Encode.encode 0 <|
-                        Encode.object
-                            [ ( "document", encodeDoc state.doc )
-                            ]
-
-                encodeDoc doc =
-                    Encode.object
-                        [ ( "template_name", Encode.string "Resolution" )
-                        , ( "title", Encode.string doc.title )
-                        , ( "data", encodeDocData doc )
-                        ]
-
-                encodeDocData doc =
-                    Encode.object
-                        [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
-                        , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
-                        , ( "clauses", Encode.list <| List.map (encodeDocClause doc) <| List.sortBy .pos <| Dict.values doc.clauses )
-                        ]
-
-                encodeDocClause doc clause =
-                    Encode.object
-                        [ ( "type", Encode.string <| getDisplayNameForClauseType doc clause.ctype )
-                        , ( "content", Encode.string clause.content )
-                        ]
-
-                cmd =
-                    Exts.Http.postJson (Decode.at [ "document" ] documentCreateResponseDecoder) "/api/v1/document" (Http.string body)
-                        |> RemoteData.asCmd
-                        |> Cmd.map PreviewResponse
-            in
-                ( state, cmd )
+            ( state, Api.Doc.create PreviewResponse state.doc )
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
-
-
-documentCreateResponseDecoder : Decode.Decoder DocumentCreateResponse
-documentCreateResponseDecoder =
-    Decode.decode DocumentCreateResponse
-        |> Decode.required "id" Decode.int
-        |> Decode.required "title" Decode.string
-        |> Decode.required "urls" (Decode.dict Decode.string)
 
 
 view : State -> Html Msg
@@ -354,7 +301,7 @@ viewPreviewRoute state =
         ]
 
 
-viewPreviewRequest : RemoteData.WebData DocumentCreateResponse -> Html Msg
+viewPreviewRequest : RemoteData.WebData Api.Doc.CreateResponse -> Html Msg
 viewPreviewRequest request =
     case request of
         RemoteData.NotAsked ->
@@ -368,8 +315,8 @@ viewPreviewRequest request =
 
         RemoteData.Success { id, urls } ->
             div []
-                [ img [ class "document-preview-image img-responsive", src (Maybe.withDefault "" <| Dict.get "preview" urls) ] []
-                , a [ class "usa-button", href (Maybe.withDefault "" <| Dict.get "original" urls) ] [ text "Download PDF" ]
+                [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+                , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]
                 ]
 
 
@@ -486,7 +433,7 @@ clauseTypeSelect : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
 clauseTypeSelect doc selectedClauseType =
     let
         determineSelectedClauseType =
-            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (getClauseTypeFromDisplayName doc)
+            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (Doc.Model.getClauseTypeFromDisplayName doc)
     in
         select [ Exts.Html.Events.onSelect (SetSelectedClauseType << determineSelectedClauseType) ] <|
             List.map
@@ -501,26 +448,7 @@ clauseTypeSelect doc selectedClauseType =
 
 clauseTypeFormatter : Doc.Model.Model -> Doc.Model.ClauseType -> Html msg
 clauseTypeFormatter doc clauseType =
-    text <| getDisplayNameForClauseType doc clauseType
-
-
-getDisplayNameForClauseType : Doc.Model.Model -> Doc.Model.ClauseType -> String
-getDisplayNameForClauseType doc clauseType =
-    Maybe.withDefault "ERROR" <|
-        Maybe.map .displayName <|
-            Maybe.oneOf
-                [ Dict.get clauseType doc.validClauseTypes
-                , Dict.get doc.defaultClauseType doc.validClauseTypes
-                ]
-
-
-getClauseTypeFromDisplayName : Doc.Model.Model -> String -> Maybe Doc.Model.ClauseType
-getClauseTypeFromDisplayName doc displayName =
-    doc.validClauseTypes
-        |> Dict.toList
-        |> List.filter (\( _, clauseTypeDesc ) -> clauseTypeDesc.displayName == displayName)
-        |> List.map fst
-        |> List.head
+    text <| Doc.Model.getDisplayNameForClauseType doc clauseType
 
 
 viewNextButton : Validator String Doc.Model.Model -> Msg -> String -> Doc.Model.Model -> Html Msg

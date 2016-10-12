@@ -1,4 +1,4 @@
-module Doc.Model exposing (Model, Clause, ClauseInfo, ClauseType, emptyDoc, addNewClause, newClause, newSponsor)
+module Doc.Model exposing (..)
 
 import Date exposing (Date)
 import Dict exposing (Dict)
@@ -68,11 +68,11 @@ emptyDoc =
     }
 
 
-addNewClause : Int -> ClauseType -> Model -> Model
-addNewClause id clauseType doc =
+addNewClause : Int -> ClauseType -> String -> Model -> Model
+addNewClause id clauseType content doc =
     let
         newClauses =
-            Dict.insert id (newClause id ((Dict.size doc.clauses) + 1) clauseType "") doc.clauses
+            Dict.insert id (newClause id ((Dict.size doc.clauses) + 1) clauseType content) doc.clauses
                 |> sortClauses
 
         sortClauses clauses =
@@ -118,6 +118,25 @@ newSponsor pos name =
     { name = name
     , pos = pos
     }
+
+
+getDisplayNameForClauseType : Model -> ClauseType -> String
+getDisplayNameForClauseType doc clauseType =
+    Maybe.withDefault "ERROR" <|
+        Maybe.map .displayName <|
+            Maybe.oneOf
+                [ Dict.get clauseType doc.validClauseTypes
+                , Dict.get doc.defaultClauseType doc.validClauseTypes
+                ]
+
+
+getClauseTypeFromDisplayName : Model -> String -> Maybe ClauseType
+getClauseTypeFromDisplayName doc displayName =
+    doc.validClauseTypes
+        |> Dict.toList
+        |> List.filter (\( _, clauseTypeDesc ) -> clauseTypeDesc.displayName == displayName)
+        |> List.map fst
+        |> List.head
 
 
 chicagoSponsors : List String
