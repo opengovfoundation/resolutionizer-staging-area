@@ -2,7 +2,7 @@ module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRou
 
 import Api.Doc
 import Dict exposing (Dict)
-import Doc.Model
+import Doc
 import Exts.Dict
 import Exts.Html.Events
 import Exts.Maybe
@@ -27,10 +27,10 @@ type Route
 
 
 type alias State =
-    { doc : Doc.Model.Model
+    { doc : Doc.Model
     , dateSelector : Inputs.DateSelector.Model
     , sponsorInputs : Dict Int SponsorInput
-    , selectedNewClauseType : Doc.Model.ClauseType
+    , selectedNewClauseType : Doc.ClauseType
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
@@ -45,7 +45,7 @@ type alias SponsorInput =
 
 
 type Msg
-    = SetSelectedClauseType Doc.Model.ClauseType
+    = SetSelectedClauseType Doc.ClauseType
     | UpdateTitle String
     | NewClause
     | UpdateClause Int String
@@ -60,7 +60,7 @@ type Msg
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
-init : Doc.Model.Model -> ( State, Cmd Msg )
+init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
         ( dateSelectorModel, dateSelectorCmd ) =
@@ -141,7 +141,7 @@ update msg state =
         NewClause ->
             let
                 newDoc =
-                    Doc.Model.addNewClause state.uid state.selectedNewClauseType "" state.doc
+                    Doc.addNewClause state.uid state.selectedNewClauseType "" state.doc
             in
                 ( { state
                     | uid = state.uid + 1
@@ -209,7 +209,7 @@ update msg state =
                                 doc
 
                             Just sponsorInput ->
-                                { doc | sponsors = Dict.insert id (Doc.Model.newSponsor sponsorInput.pos sponsorName) doc.sponsors }
+                                { doc | sponsors = Dict.insert id (Doc.newSponsor sponsorInput.pos sponsorName) doc.sponsors }
 
                 deleteSponsor id doc =
                     { doc | sponsors = Dict.remove id doc.sponsors }
@@ -357,7 +357,7 @@ viewSponsorSelectors state =
         state.sponsorInputs
 
 
-sponsorSelect : Doc.Model.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
+sponsorSelect : Doc.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
 sponsorSelect doc mSelectedSponsor toMsg =
     let
         alreadyPresentSponsorNames =
@@ -388,7 +388,7 @@ sponsorSelect doc mSelectedSponsor toMsg =
                     nonDuplicateSponsors
 
 
-viewClauses : Doc.Model.Model -> Html Msg
+viewClauses : Doc.Model -> Html Msg
 viewClauses doc =
     div [] <|
         List.map (viewClause doc) <|
@@ -397,7 +397,7 @@ viewClauses doc =
                     doc.clauses
 
 
-viewClause : Doc.Model.Model -> Doc.Model.Clause -> Html Msg
+viewClause : Doc.Model -> Doc.Clause -> Html Msg
 viewClause doc clause =
     let
         clauseId =
@@ -421,7 +421,7 @@ viewClause doc clause =
             ]
 
 
-viewClauseTypeSelector : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
+viewClauseTypeSelector : Doc.Model -> Doc.ClauseType -> Html Msg
 viewClauseTypeSelector doc selectedNewClauseType =
     div [ class "add-selector" ]
         [ clauseTypeSelect doc selectedNewClauseType
@@ -429,11 +429,11 @@ viewClauseTypeSelector doc selectedNewClauseType =
         ]
 
 
-clauseTypeSelect : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
+clauseTypeSelect : Doc.Model -> Doc.ClauseType -> Html Msg
 clauseTypeSelect doc selectedClauseType =
     let
         determineSelectedClauseType =
-            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (Doc.Model.getClauseTypeFromDisplayName doc)
+            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (Doc.getClauseTypeFromDisplayName doc)
     in
         select [ Exts.Html.Events.onSelect (SetSelectedClauseType << determineSelectedClauseType) ] <|
             List.map
@@ -446,12 +446,12 @@ clauseTypeSelect doc selectedClauseType =
                 (Dict.keys doc.validClauseTypes)
 
 
-clauseTypeFormatter : Doc.Model.Model -> Doc.Model.ClauseType -> Html msg
+clauseTypeFormatter : Doc.Model -> Doc.ClauseType -> Html msg
 clauseTypeFormatter doc clauseType =
-    text <| Doc.Model.getDisplayNameForClauseType doc clauseType
+    text <| Doc.getDisplayNameForClauseType doc clauseType
 
 
-viewNextButton : Validator String Doc.Model.Model -> Msg -> String -> Doc.Model.Model -> Html Msg
+viewNextButton : Validator String Doc.Model -> Msg -> String -> Doc.Model -> Html Msg
 viewNextButton validate onClickValidMsg btnText doc =
     let
         errors =
@@ -467,7 +467,7 @@ viewNextButton validate onClickValidMsg btnText doc =
             [ text btnText ]
 
 
-validateMeta : Validator String Doc.Model.Model
+validateMeta : Validator String Doc.Model
 validateMeta =
     Validate.all
         [ .title >> Validate.ifBlank "Please enter a title."
@@ -476,14 +476,14 @@ validateMeta =
         ]
 
 
-validateClauses : Validator String Doc.Model.Model
+validateClauses : Validator String Doc.Model
 validateClauses =
     Validate.all
         [ .clauses >> Validate.ifInvalid (not << validateClauseTypes) "Please enter at least one of each clause type."
         ]
 
 
-validateClauseTypes : Dict comparable Doc.Model.Clause -> Bool
+validateClauseTypes : Dict comparable Doc.Clause -> Bool
 validateClauseTypes clauses =
     let
         foldFunc _ clause acc =

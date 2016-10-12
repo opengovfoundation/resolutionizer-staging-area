@@ -1,10 +1,10 @@
-module Api.Doc.Test exposing (all)
+module Api.Doc.Create.Test exposing (all)
 
 import Test exposing (..)
 import Expect
 import Doc.Model
 import Doc.Fixtures
-import Api.Doc
+import Api.Doc.Create
 import TestUtil exposing (outdented)
 import Dict
 import Json.Decode as Decode
@@ -12,21 +12,21 @@ import Json.Decode as Decode
 
 all : Test
 all =
-    describe "Api Doc Tests"
-        [ encodesForCreate
-        , decodesForCreate
+    describe "Api Doc Create Tests"
+        [ encodesDoc
+        , decodesResponse
         ]
 
 
-encodesForCreate : Test
-encodesForCreate =
+encodesDoc : Test
+encodesDoc =
     test "Encodes correctly for create request" <|
         \() ->
             Doc.Fixtures.emptyDoc
                 |> (\doc -> { doc | title = "Test" })
                 |> (\doc -> { doc | sponsors = Dict.insert 1 (Doc.Model.newSponsor 1 "Tester") doc.sponsors })
                 |> Doc.Model.addNewClause 2 "Beginning" "Test phrase"
-                |> Api.Doc.encodeDocForCreate
+                |> Api.Doc.Create.encodeDocForRequest
                 |> Expect.equal (outdented """
                       {
                         "document":
@@ -50,8 +50,8 @@ encodesForCreate =
                     """)
 
 
-decodesForCreate : Test
-decodesForCreate =
+decodesResponse : Test
+decodesResponse =
     let
         input =
             """
@@ -75,7 +75,7 @@ decodesForCreate =
     in
         test "Decodes correctly for create response" <|
             \() ->
-                case Decode.decodeString Api.Doc.createResponseDecoder input of
+                case Decode.decodeString Api.Doc.Create.responseDecoder input of
                     Ok value ->
                         Expect.equal output value
 

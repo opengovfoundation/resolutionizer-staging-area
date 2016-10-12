@@ -1,4 +1,4 @@
-module Doc.Model exposing (..)
+module Doc exposing (..)
 
 import Date exposing (Date)
 import Dict exposing (Dict)
