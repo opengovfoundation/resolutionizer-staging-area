@@ -1,0 +1,84 @@
+module Api.Doc.Create exposing (..)
+
+import Dict exposing (Dict)
+import Doc
+import Http
+import Exts.Date
+import Exts.Http
+import Exts.RemoteData as RemoteData
+import Json.Decode as Decode
+import Json.Decode.Pipeline as Decode
+import Json.Encode as Encode
+
+
+type alias Response =
+    { id : Int
+    , title : String
+    , urls : ResponseUrls
+    }
+
+
+type alias ResponseUrls =
+    { preview : String
+    , original : String
+    }
+
+
+responseDecoder : Decode.Decoder Response
+responseDecoder =
+    Decode.decode Response
+        |> Decode.required "id" Decode.int
+        |> Decode.required "title" Decode.string
+        |> Decode.required "urls" responseUrlsDecoder
+
+
+responseUrlsDecoder : Decode.Decoder ResponseUrls
+responseUrlsDecoder =
+    Decode.decode ResponseUrls
+        |> Decode.required "preview" Decode.string
+        |> Decode.required "original" Decode.string
+
+
+cmd : (RemoteData.WebData Response -> msg) -> Doc.Model -> Cmd msg
+cmd msg doc =
+    Exts.Http.postJson (Decode.at [ "document" ] responseDecoder) "/api/v1/document" (Http.string <| encodeDocForRequest doc)
+        |> RemoteData.asCmd
+        |> Cmd.map msg
+
+
+encodeDocForRequest : Doc.Model -> String
+encodeDocForRequest doc =
+    Encode.encode 0 <|
+        Encode.object
+            [ ( "document", encodeDoc doc )
+            ]
+
+
+
+-- General Document encoding functions
+
+
+encodeDoc : Doc.Model -> Encode.Value
+encodeDoc doc =
+    Encode.object
+        [ ( "template_name", Encode.string "Resolution" )
+        , ( "title", Encode.string doc.title )
+        , ( "data", encodeDocData doc )
+        ]
+
+
+encodeDocData : Doc.Model -> Encode.Value
+encodeDocData doc =
+    Encode.object
+        [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
+        , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
+        , ( "clauses", Encode.list <| List.map (encodeDocClause doc) <| List.sortBy .pos <| Dict.values doc.clauses )
+        ]
+
+
+encodeDocClause : Doc.Model -> Doc.Clause -> Encode.Value
+encodeDocClause doc clause =
+    Encode.object
+        [ ( "type", Encode.string <| Doc.getDisplayNameForClauseType doc clause.ctype )
+        , ( "content", Encode.string clause.content )
+        ]

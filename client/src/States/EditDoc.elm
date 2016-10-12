@@ -1,12 +1,11 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
+import Api.Doc
 import Dict exposing (Dict)
-import Doc.Model
+import Doc
 import Dom
-import Exts.Date
 import Exts.Dict
 import Exts.Html.Events
-import Exts.Http
 import Exts.Maybe
 import Exts.RemoteData as RemoteData
 import Html exposing (..)
@@ -14,11 +13,7 @@ import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
-import Http
 import Inputs.DateSelector
-import Json.Decode as Decode
-import Json.Decode.Pipeline as Decode
-import Json.Encode as Encode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
@@ -34,14 +29,14 @@ type Route
 
 
 type alias State =
-    { doc : Doc.Model.Model
+    { doc : Doc.Model
     , dateSelector : Inputs.DateSelector.Model
     , sponsorInputs : Dict Int SponsorInput
-    , selectedNewClauseType : Doc.Model.ClauseType
+    , selectedNewClauseType : Doc.ClauseType
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
-    , previewRequest : RemoteData.WebData DocumentCreateResponse
+    , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
     }
 
 
@@ -51,15 +46,8 @@ type alias SponsorInput =
     }
 
 
-type alias DocumentCreateResponse =
-    { id : Int
-    , title : String
-    , urls : Dict String String
-    }
-
-
 type Msg
-    = SetSelectedClauseType Doc.Model.ClauseType
+    = SetSelectedClauseType Doc.ClauseType
     | UpdateTitle String
     | NewClause
     | UpdateClause Int String
@@ -71,10 +59,10 @@ type Msg
     | NoOp
     | RequestPdf
     | DoPreview
-    | PreviewResponse (RemoteData.WebData DocumentCreateResponse)
+    | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
-init : Doc.Model.Model -> ( State, Cmd Msg )
+init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
         ( dateSelectorModel, dateSelectorCmd ) =
@@ -155,7 +143,7 @@ update msg state =
         NewClause ->
             let
                 ( newDoc, newClause ) =
-                    Doc.Model.addNewClause state.uid state.selectedNewClauseType state.doc
+                    Doc.addNewClause state.uid state.selectedNewClauseType "" state.doc
             in
                 ( { state
                     | uid = state.uid + 1
@@ -228,7 +216,7 @@ update msg state =
                                 doc
 
                             Just sponsorInput ->
-                                { doc | sponsors = Dict.insert id (Doc.Model.newSponsor sponsorInput.pos sponsorName) doc.sponsors }
+                                { doc | sponsors = Dict.insert id (Doc.newSponsor sponsorInput.pos sponsorName) doc.sponsors }
 
                 deleteSponsor id doc =
                     { doc | sponsors = Dict.remove id doc.sponsors }
@@ -259,51 +247,10 @@ update msg state =
             ( state, Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
 
         RequestPdf ->
-            let
-                -- TODO: all of this should be broken out into a Api.Document module or similar
-                body =
-                    Encode.encode 0 <|
-                        Encode.object
-                            [ ( "document", encodeDoc state.doc )
-                            ]
-
-                encodeDoc doc =
-                    Encode.object
-                        [ ( "template_name", Encode.string "Resolution" )
-                        , ( "title", Encode.string doc.title )
-                        , ( "data", encodeDocData doc )
-                        ]
-
-                encodeDocData doc =
-                    Encode.object
-                        [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
-                        , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
-                        , ( "clauses", Encode.list <| List.map (encodeDocClause doc) <| List.sortBy .pos <| Dict.values doc.clauses )
-                        ]
-
-                encodeDocClause doc clause =
-                    Encode.object
-                        [ ( "type", Encode.string <| getDisplayNameForClauseType doc clause.ctype )
-                        , ( "content", Encode.string clause.content )
-                        ]
-
-                cmd =
-                    Exts.Http.postJson (Decode.at [ "document" ] documentCreateResponseDecoder) "/api/v1/document" (Http.string body)
-                        |> RemoteData.asCmd
-                        |> Cmd.map PreviewResponse
-            in
-                ( state, cmd )
+            ( state, Api.Doc.create PreviewResponse state.doc )
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
-
-
-documentCreateResponseDecoder : Decode.Decoder DocumentCreateResponse
-documentCreateResponseDecoder =
-    Decode.decode DocumentCreateResponse
-        |> Decode.required "id" Decode.int
-        |> Decode.required "title" Decode.string
-        |> Decode.required "urls" (Decode.dict Decode.string)
 
 
 view : State -> Html Msg
@@ -361,7 +308,7 @@ viewPreviewRoute state =
         ]
 
 
-viewPreviewRequest : RemoteData.WebData DocumentCreateResponse -> Html Msg
+viewPreviewRequest : RemoteData.WebData Api.Doc.CreateResponse -> Html Msg
 viewPreviewRequest request =
     case request of
         RemoteData.NotAsked ->
@@ -375,8 +322,8 @@ viewPreviewRequest request =
 
         RemoteData.Success { id, urls } ->
             div []
-                [ img [ class "document-preview-image img-responsive", src (Maybe.withDefault "" <| Dict.get "preview" urls) ] []
-                , a [ class "usa-button", href (Maybe.withDefault "" <| Dict.get "original" urls) ] [ text "Download PDF" ]
+                [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+                , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]
                 ]
 
 
@@ -417,7 +364,7 @@ viewSponsorSelectors state =
         state.sponsorInputs
 
 
-sponsorSelect : Doc.Model.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
+sponsorSelect : Doc.Model -> Maybe String -> (Maybe String -> Msg) -> Html Msg
 sponsorSelect doc mSelectedSponsor toMsg =
     let
         alreadyPresentSponsorNames =
@@ -448,7 +395,7 @@ sponsorSelect doc mSelectedSponsor toMsg =
                     nonDuplicateSponsors
 
 
-viewClauses : Doc.Model.Model -> Html Msg
+viewClauses : Doc.Model -> Html Msg
 viewClauses doc =
     div [] <|
         List.map (viewClause doc) <|
@@ -457,7 +404,7 @@ viewClauses doc =
                     doc.clauses
 
 
-viewClause : Doc.Model.Model -> Doc.Model.Clause -> Html Msg
+viewClause : Doc.Model -> Doc.Clause -> Html Msg
 viewClause doc clause =
     let
         clauseId =
@@ -481,7 +428,7 @@ viewClause doc clause =
             ]
 
 
-viewClauseTypeSelector : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
+viewClauseTypeSelector : Doc.Model -> Doc.ClauseType -> Html Msg
 viewClauseTypeSelector doc selectedNewClauseType =
     div [ class "add-selector" ]
         [ clauseTypeSelect doc selectedNewClauseType
@@ -489,11 +436,11 @@ viewClauseTypeSelector doc selectedNewClauseType =
         ]
 
 
-clauseTypeSelect : Doc.Model.Model -> Doc.Model.ClauseType -> Html Msg
+clauseTypeSelect : Doc.Model -> Doc.ClauseType -> Html Msg
 clauseTypeSelect doc selectedClauseType =
     let
         determineSelectedClauseType =
-            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (getClauseTypeFromDisplayName doc)
+            Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (Doc.getClauseTypeFromDisplayName doc)
     in
         select [ Exts.Html.Events.onSelect (SetSelectedClauseType << determineSelectedClauseType) ] <|
             List.map
@@ -506,31 +453,12 @@ clauseTypeSelect doc selectedClauseType =
                 (Dict.keys doc.validClauseTypes)
 
 
-clauseTypeFormatter : Doc.Model.Model -> Doc.Model.ClauseType -> Html msg
+clauseTypeFormatter : Doc.Model -> Doc.ClauseType -> Html msg
 clauseTypeFormatter doc clauseType =
-    text <| getDisplayNameForClauseType doc clauseType
+    text <| Doc.getDisplayNameForClauseType doc clauseType
 
 
-getDisplayNameForClauseType : Doc.Model.Model -> Doc.Model.ClauseType -> String
-getDisplayNameForClauseType doc clauseType =
-    Maybe.withDefault "ERROR" <|
-        Maybe.map .displayName <|
-            Maybe.oneOf
-                [ Dict.get clauseType doc.validClauseTypes
-                , Dict.get doc.defaultClauseType doc.validClauseTypes
-                ]
-
-
-getClauseTypeFromDisplayName : Doc.Model.Model -> String -> Maybe Doc.Model.ClauseType
-getClauseTypeFromDisplayName doc displayName =
-    doc.validClauseTypes
-        |> Dict.toList
-        |> List.filter (\( _, clauseTypeDesc ) -> clauseTypeDesc.displayName == displayName)
-        |> List.map fst
-        |> List.head
-
-
-viewNextButton : Validator String Doc.Model.Model -> Msg -> String -> Doc.Model.Model -> Html Msg
+viewNextButton : Validator String Doc.Model -> Msg -> String -> Doc.Model -> Html Msg
 viewNextButton validate onClickValidMsg btnText doc =
     let
         errors =
@@ -546,7 +474,7 @@ viewNextButton validate onClickValidMsg btnText doc =
             [ text btnText ]
 
 
-validateMeta : Validator String Doc.Model.Model
+validateMeta : Validator String Doc.Model
 validateMeta =
     Validate.all
         [ .title >> Validate.ifBlank "Please enter a title."
@@ -555,14 +483,14 @@ validateMeta =
         ]
 
 
-validateClauses : Validator String Doc.Model.Model
+validateClauses : Validator String Doc.Model
 validateClauses =
     Validate.all
         [ .clauses >> Validate.ifInvalid (not << validateClauseTypes) "Please enter at least one of each clause type."
         ]
 
 
-validateClauseTypes : Dict comparable Doc.Model.Clause -> Bool
+validateClauseTypes : Dict comparable Doc.Clause -> Bool
 validateClauseTypes clauses =
     let
         foldFunc _ clause acc =
@@ -587,6 +515,6 @@ dictKeysExist requireds dict =
         |> List.all ((==) True)
 
 
-clauseHtmlId : Doc.Model.Clause -> String
+clauseHtmlId : Doc.Clause -> String
 clauseHtmlId clause =
     "clause-" ++ toString clause.id

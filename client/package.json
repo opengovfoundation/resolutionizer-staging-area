@@ -5,6 +5,8 @@
   "dependencies": {
     "uswds": "^0.12.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "elm-test": "^0.17.3"
+  },
   "license": "AGPL-3.0"
 }
