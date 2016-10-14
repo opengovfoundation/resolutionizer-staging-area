@@ -27,7 +27,8 @@ clauseTypes =
 
 validSponsors : List String
 validSponsors =
-    [ "Arena, John (45)"
-    , "Austin, Carrie M. (34)"
-    , "Beale, Anthony (9)"
+    [ "Washington, George"
+    , "Adams, John"
+    , "Jefferson, Thomas"
+    , "Madison, James"
     ]
