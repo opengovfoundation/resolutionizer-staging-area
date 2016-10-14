@@ -1,7 +1,7 @@
 module App.Update exposing (..)
 
 import App.Model exposing (..)
-import Doc.Model
+import Doc
 import States.EditDoc
 import States.Login
 
@@ -14,8 +14,7 @@ type Msg
     | EditDocMsg States.EditDoc.Msg
 
 
-loginTranslationDictionary :
-      { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
+loginTranslationDictionary : { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
 loginTranslationDictionary =
     { onInternalMessage = LoginMsg
     , onLoggedIn = LoggedIn
@@ -86,7 +85,7 @@ update msg model =
                                         ( state, Cmd.none )
 
                                     _ ->
-                                        (States.EditDoc.init Doc.Model.emptyDoc)
+                                        (States.EditDoc.init Doc.emptyDoc)
 
                             newActiveState =
                                 EditDoc { editDocState | activeRoute = route' }
@@ -96,7 +95,7 @@ update msg model =
         LoggedIn ->
             let
                 ( editDocState, editDocCmd ) =
-                    (States.EditDoc.init Doc.Model.emptyDoc)
+                    (States.EditDoc.init Doc.emptyDoc)
             in
                 ( { model
                     | activeState = EditDoc editDocState

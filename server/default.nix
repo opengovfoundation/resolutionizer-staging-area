@@ -11,7 +11,7 @@ in stdenv.mkDerivation rec {
   version = "0.1.0.0";
   src = builtins.filterSource cleanSource ./.;
   buildInputs = [
-    elixir makeWrapper
+    elixir makeWrapper wkhtmltopdf imagemagickBig ghostscript
   ];
 
   # Elixir complains otherwise
