@@ -3,9 +3,9 @@ module App.Router exposing (..)
 import App.Model exposing (..)
 import App.Update exposing (Msg(..))
 import Navigation exposing (Location)
+import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import States.EditDoc
 import String
-import RouteUrl exposing (HistoryEntry(..), UrlChange)
 
 
 delta2url : Model -> Model -> Maybe UrlChange

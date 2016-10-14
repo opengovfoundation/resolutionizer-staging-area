@@ -14,8 +14,7 @@ type Msg
     | EditDocMsg States.EditDoc.Msg
 
 
-loginTranslationDictionary :
-      { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
+loginTranslationDictionary : { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
 loginTranslationDictionary =
     { onInternalMessage = LoginMsg
     , onLoggedIn = LoggedIn

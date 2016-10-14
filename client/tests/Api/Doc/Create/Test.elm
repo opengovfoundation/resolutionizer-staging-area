@@ -1,13 +1,13 @@
 module Api.Doc.Create.Test exposing (all)
 
-import Test exposing (..)
-import Expect
+import Api.Doc.Create
+import Dict
 import Doc
 import Doc.Fixtures
-import Api.Doc.Create
-import TestUtil exposing (outdented)
-import Dict
+import Expect
 import Json.Decode as Decode
+import Test exposing (..)
+import TestUtil exposing (outdented)
 
 
 all : Test
@@ -25,7 +25,7 @@ encodesDoc =
             Doc.Fixtures.emptyDoc
                 |> (\doc -> { doc | title = "Test" })
                 |> (\doc -> { doc | sponsors = Dict.insert 1 (Doc.newSponsor 1 "Tester") doc.sponsors })
-                |> Doc.addNewClause 2 "Beginning" "Test phrase"
+                |> (fst << Doc.addNewClause 2 "Beginning" "Test phrase")
                 |> Api.Doc.Create.encodeDocForRequest
                 |> Expect.equal (outdented """
                       {
