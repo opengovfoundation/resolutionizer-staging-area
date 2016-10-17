@@ -3,9 +3,7 @@ defmodule Resolutionizer.PDF.Result do
   Returned structure for the result of a PDF generation.
   """
 
-  alias Resolutionizer.PDF
-
-  @type t :: %PDF.Result{
+  @type t :: %__MODULE__{
     path: String.t,
     size: integer
   }

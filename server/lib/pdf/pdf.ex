@@ -24,6 +24,14 @@ defmodule Resolutionizer.PDF do
   Error handling will occur in PDF.generate/1
   """
 
+  @type ok_string :: {:ok, String.t}
+  @type error_string :: {:error, String.t}
+
+  @typedoc """
+  Something that can succeed or fail with a string reasoning.
+  """
+  @type errorable_result :: ok_string | error_string
+
   @doc "Start a new PDF, passing in initial configuration."
   @spec start(list) :: Config.t
   def start(opts \\ []), do: Config.new(opts)
@@ -49,7 +57,7 @@ defmodule Resolutionizer.PDF do
 
   Returns a result object of either `{:error, reason}` or `{:ok, %PDF.Result{}}`
   """
-  @spec generate(Config.t) :: {atom, Result.t}
+  @spec generate(Config.t) :: {:ok, Result.t} | error_string
   def generate(%Config{} = config) do
     with {:ok, loaded_config} <- load_template(config),
          :ok <- check_template(loaded_config),
@@ -58,6 +66,7 @@ defmodule Resolutionizer.PDF do
     do: {:ok, pdf_result}
   end
 
+  @spec load_template(Config.t) :: errorable_result
   defp load_template(config) do
     case Template.get(config.template_name) do
       {:ok, template} -> {:ok, struct(config, [template: template])}
@@ -65,11 +74,13 @@ defmodule Resolutionizer.PDF do
     end
   end
 
+  @spec check_template(Config.t) :: :ok | error_string
   defp check_template(config) do
     with :ok <- Template.check_data(struct(config.template).fields, config.data),
     do: :ok
   end
 
+  @spec compile_html(Config.t) :: errorable_result
   defp compile_html(config) do
     file_base = struct(config.template).name
 
@@ -86,6 +97,7 @@ defmodule Resolutionizer.PDF do
   end
 
   # Takes a map of string key'd data and converts it into an atom keyword list
+  @spec data_map_to_list(map) :: list
   defp data_map_to_list(data_map) do
     for {key, val} <- data_map, into: [], do: { String.to_atom(key), val }
   end
@@ -100,6 +112,7 @@ defmodule Resolutionizer.PDF do
     end
   end
 
+  @spec get_file_size(String.t) :: integer
   defp get_file_size(path) do
     %{size: size} = File.stat!(path)
     size
