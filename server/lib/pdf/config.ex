@@ -6,7 +6,6 @@ defmodule Resolutionizer.PDF.Config do
   alias Resolutionizer.PDF
 
   @type t :: %__MODULE__{
-    base_path: String.t,
     template_name: String.t,
     template: PDF.Template.t,
     data: map,

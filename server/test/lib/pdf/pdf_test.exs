@@ -26,7 +26,7 @@ defmodule Resolutionizer.PDFTest do
   start returns default config struct
   """ do
     default_config = PDF.start
-    assert default_config.base_path
+    assert default_config.tmp_dir
     assert default_config.template == %PDF.Template{}
     assert default_config.data == %{}
   end
@@ -36,8 +36,8 @@ defmodule Resolutionizer.PDFTest do
   test """
   passing in initial config sets those options on the config map
   """ do
-    config = PDF.start %{ base_path: "/new/path" }
-    assert config.base_path == "/new/path"
+    config = PDF.start %{ tmp_dir: "/new/path" }
+    assert config.tmp_dir == "/new/path"
   end
 
   # PDF.template/2
