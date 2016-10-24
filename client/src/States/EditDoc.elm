@@ -1,6 +1,7 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
 import Api.Doc
+import Date exposing (Date)
 import Dict exposing (Dict)
 import Doc
 import Dom
@@ -55,18 +56,31 @@ type Msg
     | SetActiveRoute Route
     | NewSponsorInput
     | SponsorInputChange Int (Maybe String)
-    | DateSelectorMsg Inputs.DateSelector.Msg
+    | DateSelectorMsg Inputs.DateSelector.InternalMsg
+    | MeetingDateSelected Date
     | NoOp
     | RequestPdf
     | DoPreview
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
+dateSelectorTranslationDictionary : { onInternalMessage : Inputs.DateSelector.InternalMsg -> Msg, onDateSelected : Date -> Msg }
+dateSelectorTranslationDictionary =
+    { onInternalMessage = DateSelectorMsg
+    , onDateSelected = MeetingDateSelected
+    }
+
+
+dateSelectorTranslator : Inputs.DateSelector.Translator Msg
+dateSelectorTranslator =
+    Inputs.DateSelector.translator dateSelectorTranslationDictionary
+
+
 init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
         ( dateSelectorModel, dateSelectorCmd ) =
-            Inputs.DateSelector.init
+            Inputs.DateSelector.init { defaultToNow = True }
 
         uidAfterDoc =
             Dict.size doc.clauses + Dict.size doc.sponsors
@@ -89,7 +103,7 @@ init doc =
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
           }
-        , Cmd.map DateSelectorMsg dateSelectorCmd
+        , Cmd.map dateSelectorTranslator dateSelectorCmd
         )
 
 
@@ -229,16 +243,20 @@ update msg state =
 
         DateSelectorMsg msg' ->
             let
-                ( dateSelectorModel, dateSelectorCmd, mSelectedDate ) =
+                ( dateSelectorModel, dateSelectorCmd ) =
                     Inputs.DateSelector.update msg' state.dateSelector
+            in
+                ( { state | dateSelector = dateSelectorModel }, Cmd.map dateSelectorTranslator dateSelectorCmd )
 
+        MeetingDateSelected date ->
+            let
                 doc =
                     state.doc
 
                 newDoc =
-                    { doc | meetingDate = mSelectedDate }
+                    { doc | meetingDate = Just date }
             in
-                ( { state | doc = newDoc, dateSelector = dateSelectorModel }, Cmd.map DateSelectorMsg dateSelectorCmd )
+                ( { state | doc = newDoc }, Cmd.none )
 
         NoOp ->
             ( state, Cmd.none )
@@ -336,7 +354,7 @@ viewMeta state =
             ]
         , div []
             [ label [ for "meeting-date", class "usa-width-one-sixth" ] [ text "Meeting Date" ]
-            , Html.map DateSelectorMsg <| Inputs.DateSelector.view state.dateSelector
+            , Html.map dateSelectorTranslator <| Inputs.DateSelector.view state.dateSelector
             ]
         , viewSponsors state
         ]

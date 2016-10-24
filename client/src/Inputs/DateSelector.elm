@@ -1,4 +1,4 @@
-module Inputs.DateSelector exposing (Model, Msg, init, update, view)
+module Inputs.DateSelector exposing (Model, Msg, InternalMsg, Translator, translator, init, update, view)
 
 import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
@@ -9,7 +9,18 @@ import Html.Events exposing (..)
 import Util
 
 
-type Model
+type alias Model =
+    { config : Config
+    , state : State
+    }
+
+
+type alias Config =
+    { defaultToNow : Bool
+    }
+
+
+type State
     = Uninitialized
     | Running
         { dropdownOpen : Bool
@@ -20,69 +31,103 @@ type Model
         }
 
 
-type Msg
+type OutMsg
+    = SelectOut Date
+
+
+type InternalMsg
     = Select Date
     | Toggle
     | Init Date
     | NoOp
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Uninitialized, Util.performFailproof Init Date.now )
+type Msg
+    = ForSelf InternalMsg
+    | ForParent OutMsg
 
 
-initRunning : Date -> Model
-initRunning now =
+type alias TranslationDictionary msg =
+    { onInternalMessage : InternalMsg -> msg
+    , onDateSelected : Date -> msg
+    }
+
+
+type alias Translator parentMsg =
+    Msg -> parentMsg
+
+
+translator : TranslationDictionary parentMsg -> Translator parentMsg
+translator { onInternalMessage, onDateSelected } msg =
+    case msg of
+        ForSelf internal ->
+            onInternalMessage internal
+
+        ForParent (SelectOut date) ->
+            onDateSelected date
+
+
+init : Config -> ( Model, Cmd Msg )
+init conf =
+    ( { config = conf, state = Uninitialized }, Util.performFailproof (ForSelf << Init) Date.now )
+
+
+initRunning : Model -> Date -> Model
+initRunning model now =
     let
         today =
             Date.floor Day now
+
+        runningState =
+            Running
+                { dropdownOpen = False
+                , now = now
+                , minimumDate = today
+                , maximumDate = Date.add Year 1 today
+                , selected =
+                    if model.config.defaultToNow then
+                        Just today
+                    else
+                        Nothing
+                }
     in
-        Running
-            { dropdownOpen = False
-            , now = now
-            , minimumDate = today
-            , maximumDate = Date.add Year 1 today
-            , selected = Just today
-            }
+        { model | state = runningState }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe Date )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model of
+    case model.state of
         Uninitialized ->
             case msg of
                 Init date ->
-                    -- After getting the running state, we send a NoOp message
-                    -- to emit the correct selected date
-                    ( initRunning date, Util.msgToCmd NoOp, Nothing )
+                    ( initRunning model date, Util.msgToCmd (ForParent <| SelectOut date) )
 
                 _ ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none )
 
         Running state ->
             case msg of
                 Select date ->
-                    ( Running { state | selected = Just date }, Cmd.none, Just date )
+                    ( { model | state = Running { state | selected = Just date } }, Util.msgToCmd (ForParent <| SelectOut date) )
 
                 Toggle ->
-                    ( Running { state | dropdownOpen = not state.dropdownOpen }, Cmd.none, state.selected )
+                    ( { model | state = Running { state | dropdownOpen = not state.dropdownOpen } }, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none, state.selected )
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    case model of
+    case model.state of
         Uninitialized ->
             div [] []
 
         Running state ->
             DateSelectorDropdown.viewWithButton
                 viewDateSelectorInput
-                Toggle
-                Select
+                (ForSelf <| Toggle)
+                (ForSelf << Select)
                 state.dropdownOpen
                 state.minimumDate
                 state.maximumDate
@@ -96,6 +141,6 @@ viewDateSelectorInput isOpen selected =
         , name "meeting-date"
         , readonly True
         , autocomplete False
-        , onClick Toggle
+        , onClick (ForSelf <| Toggle)
         ]
         []
