@@ -129,10 +129,10 @@ defmodule Resolutionizer.PDF do
   @doc """
   Returns the full file path to an existing PDF.
   """
-  @spec path(String.t) :: {atom, String.t}
+  @spec path(String.t) :: errorable_result
   def path(base), do: path_check("#{System.tmp_dir}/resolutionizer_pdfs/#{base}.pdf")
 
-  @spec path(String.t, String.t) :: {atom, String.t}
+  @spec path(String.t, String.t) :: errorable_result
   def path(base, dir) do
     path_check("#{dir}/#{base}.pdf")
   end
