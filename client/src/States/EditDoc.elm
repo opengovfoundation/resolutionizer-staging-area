@@ -2,12 +2,12 @@ module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRou
 
 import Api.Doc
 import Date exposing (Date)
+import Date.Extra as Date exposing (Interval(..))
 import Dict exposing (Dict)
 import Doc
 import Dom
 import Exts.Dict
 import Exts.Html.Events
-import Exts.Json.Decode
 import Exts.Maybe
 import Exts.RemoteData as RemoteData
 import Html exposing (..)
@@ -83,7 +83,13 @@ init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
         lastMeetingDateTask =
-            Http.get (Decode.at [ "date" ] Exts.Json.Decode.decodeDate) "/api/v1/templates/last_meeting_date"
+            Http.get
+                (Decode.at [ "date" ]
+                    (Decode.customDecoder Decode.string
+                        (Result.fromMaybe "Date parsing error" << Date.fromIsoString)
+                    )
+                )
+                "/api/v1/templates/last_meeting_date"
                 |> Task.toMaybe
 
         dateSelectorBaseConfig =
@@ -95,6 +101,7 @@ init doc =
                     | defaultTo =
                         Inputs.DateSelector.Run lastMeetingDateTask
                     , inputName = "meeting-date"
+                    , maxDate = Date.add Year 1
                 }
 
         uidAfterDoc =

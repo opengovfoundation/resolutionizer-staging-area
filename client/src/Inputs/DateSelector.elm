@@ -34,6 +34,8 @@ type alias Config =
     { defaultTo : DefaultTo
     , inputName : String
     , dateDisplayFormat : String
+    , minDate : Date -> Date
+    , maxDate : Date -> Date
     }
 
 
@@ -94,6 +96,8 @@ defaultConfig =
     { defaultTo = Now
     , inputName = "date-selector"
     , dateDisplayFormat = "yyyy-MM-dd"
+    , minDate = identity
+    , maxDate = identity
     }
 
 
@@ -119,8 +123,8 @@ initRunning model now =
             Running
                 { dropdownOpen = False
                 , now = now
-                , minimumDate = today
-                , maximumDate = Date.add Year 1 today
+                , minimumDate = model.config.minDate today
+                , maximumDate = model.config.maxDate today
                 , selected = Nothing
                 }
     in
