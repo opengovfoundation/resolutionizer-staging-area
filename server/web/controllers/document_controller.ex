@@ -27,7 +27,7 @@ defmodule Resolutionizer.DocumentController do
   def create(conn, %{"document" => document_params}) do
     changeset = Document.changeset(%Document{}, document_params)
 
-    # Save the doc in the Datbase
+    # Save the doc in the Database
     case Repo.insert(changeset) do
       {:ok, document} -> generate_document_pdf(conn, document)
       {:error, _} -> Plug.Conn.send_resp(conn, 400, "invalid parameters error")

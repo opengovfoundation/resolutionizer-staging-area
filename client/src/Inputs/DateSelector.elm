@@ -1,4 +1,18 @@
-module Inputs.DateSelector exposing (Model, Msg, init, update, view)
+module Inputs.DateSelector
+    exposing
+        ( Model
+        , Msg
+        , InternalMsg
+        , Translator
+        , TranslationDictionary
+        , DefaultTo(..)
+        , translator
+        , init
+        , update
+        , view
+        , defaultConfig
+        , usConfig
+        )
 
 import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
@@ -6,10 +20,31 @@ import DateSelectorDropdown
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Task exposing (Task)
 import Util
 
 
-type Model
+type alias Model =
+    { config : Config
+    , state : State
+    }
+
+
+type alias Config =
+    { defaultTo : DefaultTo
+    , inputName : String
+    , dateDisplayFormat : String
+    , minDate : Date -> Date
+    , maxDate : Date -> Date
+    }
+
+
+type DefaultTo
+    = Now
+    | Run (Task Never (Maybe Date))
+
+
+type State
     = Uninitialized
     | Running
         { dropdownOpen : Bool
@@ -20,82 +55,150 @@ type Model
         }
 
 
-type Msg
+type OutMsg
+    = SelectOut Date
+
+
+type InternalMsg
     = Select Date
     | Toggle
     | Init Date
     | NoOp
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Uninitialized, Util.performFailproof Init Date.now )
+type Msg
+    = ForSelf InternalMsg
+    | ForParent OutMsg
 
 
-initRunning : Date -> Model
-initRunning now =
+type alias TranslationDictionary msg =
+    { onInternalMessage : InternalMsg -> msg
+    , onDateSelected : Date -> msg
+    }
+
+
+type alias Translator parentMsg =
+    Msg -> parentMsg
+
+
+translator : TranslationDictionary parentMsg -> Translator parentMsg
+translator { onInternalMessage, onDateSelected } msg =
+    case msg of
+        ForSelf internal ->
+            onInternalMessage internal
+
+        ForParent (SelectOut date) ->
+            onDateSelected date
+
+
+defaultConfig : Config
+defaultConfig =
+    { defaultTo = Now
+    , inputName = "date-selector"
+    , dateDisplayFormat = "yyyy-MM-dd"
+    , minDate = identity
+    , maxDate = identity
+    }
+
+
+usConfig : Config
+usConfig =
+    { defaultConfig | dateDisplayFormat = "MM/dd/yyyy" }
+
+
+init : Config -> ( Model, Cmd Msg )
+init conf =
+    ( { config = conf, state = Uninitialized }
+    , Util.performFailproof (ForSelf << Init) Date.now
+    )
+
+
+initRunning : Model -> Date -> Model
+initRunning model now =
     let
         today =
             Date.floor Day now
+
+        runningState =
+            Running
+                { dropdownOpen = False
+                , now = now
+                , minimumDate = model.config.minDate today
+                , maximumDate = model.config.maxDate today
+                , selected = Nothing
+                }
     in
-        Running
-            { dropdownOpen = False
-            , now = now
-            , minimumDate = today
-            , maximumDate = Date.add Year 1 today
-            , selected = Just today
-            }
+        { model | state = runningState }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe Date )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model of
+    case model.state of
         Uninitialized ->
             case msg of
-                Init date ->
-                    -- After getting the running state, we send a NoOp message
-                    -- to emit the correct selected date
-                    ( initRunning date, Util.msgToCmd NoOp, Nothing )
+                Init now ->
+                    let
+                        today =
+                            Date.floor Day now
+
+                        cmdForSelected =
+                            case model.config.defaultTo of
+                                Now ->
+                                    Util.msgToCmd (ForSelf <| Select today)
+
+                                Run cmd' ->
+                                    Util.performFailproof
+                                        (ForSelf
+                                            << Select
+                                            << Maybe.withDefault today
+                                        )
+                                        cmd'
+                    in
+                        ( initRunning model now, cmdForSelected )
 
                 _ ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none )
 
         Running state ->
             case msg of
                 Select date ->
-                    ( Running { state | selected = Just date }, Cmd.none, Just date )
+                    let
+                        clampedDate =
+                            Date.clamp state.minimumDate state.maximumDate date
+                    in
+                        ( { model | state = Running { state | selected = Just clampedDate } }, Util.msgToCmd (ForParent <| SelectOut clampedDate) )
 
                 Toggle ->
-                    ( Running { state | dropdownOpen = not state.dropdownOpen }, Cmd.none, state.selected )
+                    ( { model | state = Running { state | dropdownOpen = not state.dropdownOpen } }, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none, state.selected )
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    case model of
+    case model.state of
         Uninitialized ->
             div [] []
 
         Running state ->
             DateSelectorDropdown.viewWithButton
-                viewDateSelectorInput
-                Toggle
-                Select
+                (viewDateSelectorInput model.config)
+                (ForSelf <| Toggle)
+                (ForSelf << Select)
                 state.dropdownOpen
                 state.minimumDate
                 state.maximumDate
                 state.selected
 
 
-viewDateSelectorInput : Bool -> Maybe Date -> Html Msg
-viewDateSelectorInput isOpen selected =
+viewDateSelectorInput : Config -> Bool -> Maybe Date -> Html Msg
+viewDateSelectorInput config isOpen selected =
     input
-        [ value (selected |> Maybe.map (Date.toFormattedString "MM/dd/yyyy") |> Maybe.withDefault "")
-        , name "meeting-date"
+        [ value (selected |> Maybe.map (Date.toFormattedString config.dateDisplayFormat) |> Maybe.withDefault "")
+        , name config.inputName
         , readonly True
         , autocomplete False
-        , onClick Toggle
+        , onClick (ForSelf <| Toggle)
         ]
         []

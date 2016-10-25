@@ -1,6 +1,8 @@
 module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
 
 import Api.Doc
+import Date exposing (Date)
+import Date.Extra as Date exposing (Interval(..))
 import Dict exposing (Dict)
 import Doc
 import Dom
@@ -13,7 +15,9 @@ import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
+import Http
 import Inputs.DateSelector
+import Json.Decode as Decode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
@@ -55,18 +59,50 @@ type Msg
     | SetActiveRoute Route
     | NewSponsorInput
     | SponsorInputChange Int (Maybe String)
-    | DateSelectorMsg Inputs.DateSelector.Msg
+    | DateSelectorMsg Inputs.DateSelector.InternalMsg
+    | MeetingDateSelected Date
     | NoOp
     | RequestPdf
     | DoPreview
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
+dateSelectorTranslationDictionary : Inputs.DateSelector.TranslationDictionary Msg
+dateSelectorTranslationDictionary =
+    { onInternalMessage = DateSelectorMsg
+    , onDateSelected = MeetingDateSelected
+    }
+
+
+dateSelectorTranslator : Inputs.DateSelector.Translator Msg
+dateSelectorTranslator =
+    Inputs.DateSelector.translator dateSelectorTranslationDictionary
+
+
 init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
+        lastMeetingDateTask =
+            Http.get
+                (Decode.at [ "date" ]
+                    (Decode.customDecoder Decode.string
+                        (Result.fromMaybe "Date parsing error" << Date.fromIsoString)
+                    )
+                )
+                "/api/v1/templates/last_meeting_date"
+                |> Task.toMaybe
+
+        dateSelectorBaseConfig =
+            Inputs.DateSelector.usConfig
+
         ( dateSelectorModel, dateSelectorCmd ) =
             Inputs.DateSelector.init
+                { dateSelectorBaseConfig
+                    | defaultTo =
+                        Inputs.DateSelector.Run lastMeetingDateTask
+                    , inputName = "meeting-date"
+                    , maxDate = Date.add Year 1
+                }
 
         uidAfterDoc =
             Dict.size doc.clauses + Dict.size doc.sponsors
@@ -89,7 +125,7 @@ init doc =
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
           }
-        , Cmd.map DateSelectorMsg dateSelectorCmd
+        , Cmd.map dateSelectorTranslator dateSelectorCmd
         )
 
 
@@ -229,16 +265,20 @@ update msg state =
 
         DateSelectorMsg msg' ->
             let
-                ( dateSelectorModel, dateSelectorCmd, mSelectedDate ) =
+                ( dateSelectorModel, dateSelectorCmd ) =
                     Inputs.DateSelector.update msg' state.dateSelector
+            in
+                ( { state | dateSelector = dateSelectorModel }, Cmd.map dateSelectorTranslator dateSelectorCmd )
 
+        MeetingDateSelected date ->
+            let
                 doc =
                     state.doc
 
                 newDoc =
-                    { doc | meetingDate = mSelectedDate }
+                    { doc | meetingDate = Just date }
             in
-                ( { state | doc = newDoc, dateSelector = dateSelectorModel }, Cmd.map DateSelectorMsg dateSelectorCmd )
+                ( { state | doc = newDoc }, Cmd.none )
 
         NoOp ->
             ( state, Cmd.none )
@@ -336,7 +376,7 @@ viewMeta state =
             ]
         , div []
             [ label [ for "meeting-date", class "usa-width-one-sixth" ] [ text "Meeting Date" ]
-            , Html.map DateSelectorMsg <| Inputs.DateSelector.view state.dateSelector
+            , Html.map dateSelectorTranslator <| Inputs.DateSelector.view state.dateSelector
             ]
         , viewSponsors state
         ]

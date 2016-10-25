@@ -19,6 +19,7 @@ defmodule Resolutionizer.Router do
     pipe_through :api
 
     resources "/document", DocumentController, only: [:create]
+    get "/templates/last_meeting_date", TemplateController, :last_meeting_date
   end
 
   scope "/", Resolutionizer do
