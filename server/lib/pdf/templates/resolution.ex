@@ -8,6 +8,7 @@ defmodule Resolutionizer.PDF.Template.Resolution do
     fields: [:meeting_date, :sponsors, :clauses],
     options: [
       "--disable-smart-shrinking",
+      "--no-background",
       "-T", "25",
       "-B", "25",
       "-L", "25",
