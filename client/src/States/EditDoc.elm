@@ -87,10 +87,15 @@ init doc =
                 |> Task.toMaybe
 
         dateSelectorBaseConfig =
-            Inputs.DateSelector.defaultConfig
+            Inputs.DateSelector.usConfig
 
         ( dateSelectorModel, dateSelectorCmd ) =
-            Inputs.DateSelector.init { dateSelectorBaseConfig | defaultTo = Inputs.DateSelector.Run lastMeetingDateTask }
+            Inputs.DateSelector.init
+                { dateSelectorBaseConfig
+                    | defaultTo =
+                        Inputs.DateSelector.Run lastMeetingDateTask
+                    , inputName = "meeting-date"
+                }
 
         uidAfterDoc =
             Dict.size doc.clauses + Dict.size doc.sponsors

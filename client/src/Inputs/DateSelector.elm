@@ -11,6 +11,7 @@ module Inputs.DateSelector
         , update
         , view
         , defaultConfig
+        , usConfig
         )
 
 import Date exposing (Date)
@@ -31,6 +32,8 @@ type alias Model =
 
 type alias Config =
     { defaultTo : DefaultTo
+    , inputName : String
+    , dateDisplayFormat : String
     }
 
 
@@ -89,7 +92,14 @@ translator { onInternalMessage, onDateSelected } msg =
 defaultConfig : Config
 defaultConfig =
     { defaultTo = Now
+    , inputName = "date-selector"
+    , dateDisplayFormat = "yyyy-MM-dd"
     }
+
+
+usConfig : Config
+usConfig =
+    { defaultConfig | dateDisplayFormat = "MM/dd/yyyy" }
 
 
 init : Config -> ( Model, Cmd Msg )
@@ -165,7 +175,7 @@ view model =
 
         Running state ->
             DateSelectorDropdown.viewWithButton
-                viewDateSelectorInput
+                (viewDateSelectorInput model.config)
                 (ForSelf <| Toggle)
                 (ForSelf << Select)
                 state.dropdownOpen
@@ -174,11 +184,11 @@ view model =
                 state.selected
 
 
-viewDateSelectorInput : Bool -> Maybe Date -> Html Msg
-viewDateSelectorInput isOpen selected =
+viewDateSelectorInput : Config -> Bool -> Maybe Date -> Html Msg
+viewDateSelectorInput config isOpen selected =
     input
-        [ value (selected |> Maybe.map (Date.toFormattedString "MM/dd/yyyy") |> Maybe.withDefault "")
-        , name "meeting-date"
+        [ value (selected |> Maybe.map (Date.toFormattedString config.dateDisplayFormat) |> Maybe.withDefault "")
+        , name config.inputName
         , readonly True
         , autocomplete False
         , onClick (ForSelf <| Toggle)
