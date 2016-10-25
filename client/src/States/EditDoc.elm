@@ -7,6 +7,7 @@ import Doc
 import Dom
 import Exts.Dict
 import Exts.Html.Events
+import Exts.Json.Decode
 import Exts.Maybe
 import Exts.RemoteData as RemoteData
 import Html exposing (..)
@@ -14,7 +15,9 @@ import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
+import Http
 import Inputs.DateSelector
+import Json.Decode as Decode
 import Navigation exposing (Location)
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
@@ -64,7 +67,7 @@ type Msg
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
-dateSelectorTranslationDictionary : { onInternalMessage : Inputs.DateSelector.InternalMsg -> Msg, onDateSelected : Date -> Msg }
+dateSelectorTranslationDictionary : Inputs.DateSelector.TranslationDictionary Msg
 dateSelectorTranslationDictionary =
     { onInternalMessage = DateSelectorMsg
     , onDateSelected = MeetingDateSelected
@@ -79,8 +82,15 @@ dateSelectorTranslator =
 init : Doc.Model -> ( State, Cmd Msg )
 init doc =
     let
+        lastMeetingDateTask =
+            Http.get (Decode.at [ "date" ] Exts.Json.Decode.decodeDate) "/api/v1/templates/last_meeting_date"
+                |> Task.toMaybe
+
+        dateSelectorBaseConfig =
+            Inputs.DateSelector.defaultConfig
+
         ( dateSelectorModel, dateSelectorCmd ) =
-            Inputs.DateSelector.init { defaultToNow = True }
+            Inputs.DateSelector.init { dateSelectorBaseConfig | defaultTo = Inputs.DateSelector.Run lastMeetingDateTask }
 
         uidAfterDoc =
             Dict.size doc.clauses + Dict.size doc.sponsors

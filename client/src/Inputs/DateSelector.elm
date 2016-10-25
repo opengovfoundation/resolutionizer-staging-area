@@ -1,4 +1,17 @@
-module Inputs.DateSelector exposing (Model, Msg, InternalMsg, Translator, translator, init, update, view)
+module Inputs.DateSelector
+    exposing
+        ( Model
+        , Msg
+        , InternalMsg
+        , Translator
+        , TranslationDictionary
+        , DefaultTo(..)
+        , translator
+        , init
+        , update
+        , view
+        , defaultConfig
+        )
 
 import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
@@ -6,6 +19,7 @@ import DateSelectorDropdown
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Task exposing (Task)
 import Util
 
 
@@ -16,8 +30,13 @@ type alias Model =
 
 
 type alias Config =
-    { defaultToNow : Bool
+    { defaultTo : DefaultTo
     }
+
+
+type DefaultTo
+    = Now
+    | Run (Task Never (Maybe Date))
 
 
 type State
@@ -67,9 +86,17 @@ translator { onInternalMessage, onDateSelected } msg =
             onDateSelected date
 
 
+defaultConfig : Config
+defaultConfig =
+    { defaultTo = Now
+    }
+
+
 init : Config -> ( Model, Cmd Msg )
 init conf =
-    ( { config = conf, state = Uninitialized }, Util.performFailproof (ForSelf << Init) Date.now )
+    ( { config = conf, state = Uninitialized }
+    , Util.performFailproof (ForSelf << Init) Date.now
+    )
 
 
 initRunning : Model -> Date -> Model
@@ -84,11 +111,7 @@ initRunning model now =
                 , now = now
                 , minimumDate = today
                 , maximumDate = Date.add Year 1 today
-                , selected =
-                    if model.config.defaultToNow then
-                        Just today
-                    else
-                        Nothing
+                , selected = Nothing
                 }
     in
         { model | state = runningState }
@@ -99,8 +122,25 @@ update msg model =
     case model.state of
         Uninitialized ->
             case msg of
-                Init date ->
-                    ( initRunning model date, Util.msgToCmd (ForParent <| SelectOut date) )
+                Init now ->
+                    let
+                        today =
+                            Date.floor Day now
+
+                        cmdForSelected =
+                            case model.config.defaultTo of
+                                Now ->
+                                    Util.msgToCmd (ForSelf <| Select today)
+
+                                Run cmd' ->
+                                    Util.performFailproof
+                                        (ForSelf
+                                            << Select
+                                            << Maybe.withDefault today
+                                        )
+                                        cmd'
+                    in
+                        ( initRunning model now, cmdForSelected )
 
                 _ ->
                     ( model, Cmd.none )
