@@ -162,7 +162,11 @@ update msg model =
         Running state ->
             case msg of
                 Select date ->
-                    ( { model | state = Running { state | selected = Just date } }, Util.msgToCmd (ForParent <| SelectOut date) )
+                    let
+                        clampedDate =
+                            Date.clamp state.minimumDate state.maximumDate date
+                    in
+                        ( { model | state = Running { state | selected = Just clampedDate } }, Util.msgToCmd (ForParent <| SelectOut clampedDate) )
 
                 Toggle ->
                     ( { model | state = Running { state | dropdownOpen = not state.dropdownOpen } }, Cmd.none )
