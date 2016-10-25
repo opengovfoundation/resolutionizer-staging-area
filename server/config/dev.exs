@@ -29,6 +29,7 @@ config :resolutionizer, Resolutionizer.Repo,
   pool_size: 10
 
 config :arc,
-  bucket: "resolutionizer-dev"
+  bucket: "resolutionizer-dev",
+  version_timeout: 30_000
 
 import_config "dev.secret.exs"
