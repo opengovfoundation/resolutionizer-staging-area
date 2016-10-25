@@ -5,10 +5,14 @@ defmodule Resolutionizer.PDF.Config do
 
   alias Resolutionizer.PDF
 
-  defstruct(
-    # Location of template files for lookup
-    base_path: "#{__DIR__}/templates/",
+  @type t :: %__MODULE__{
+    template_name: String.t,
+    template: PDF.Template.t,
+    data: map,
+    tmp_dir: String.t
+  }
 
+  defstruct(
     # Provided name of template
     template_name: "",
 
@@ -19,9 +23,10 @@ defmodule Resolutionizer.PDF.Config do
     data: %{},
 
     # Temp directory where generated files will be stored
-    tmp_dir: nil
+    tmp_dir: ""
   )
 
+  @spec new(list) :: t
   def new(opts \\ []) do
     __MODULE__
     |> struct([ tmp_dir: "#{System.tmp_dir}/resolutionizer_pdfs" ])

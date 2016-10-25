@@ -20,5 +20,13 @@ defmodule Resolutionizer.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
+  @dialyzer [
+    {:nowarn_function, 'MACRO-dgettext': 3},
+    {:nowarn_function, 'MACRO-dgettext': 4},
+    {:nowarn_function, 'MACRO-dngettext': 5},
+    {:nowarn_function, 'MACRO-dngettext': 6},
+    {:nowarn_function, lngettext: 5},
+    {:nowarn_function, lngettext: 6}]
+
   use Gettext, otp_app: :resolutionizer
 end
