@@ -14,7 +14,7 @@ defmodule Resolutionizer.DocResult do
   end
 
   # Define a thumbnail transformation:
-  def transform(:preview, {file, scope}) do
+  def transform(:preview, {_file, scope}) do
     {"./lib/pdf/templates/#{String.downcase(scope.template_name)}.preview.sh", fn(input, output) ->
       [input, output]
     end, :jpg}
