@@ -16,7 +16,8 @@ defmodule Resolutionizer.DocResult do
   # Define a thumbnail transformation:
   def transform(:preview, {_file, scope}) do
     template = String.downcase(scope.template_name)
-    {"./lib/pdf/templates/#{template}/#{template}.preview.sh", fn(input, output) ->
+    script_base_dir = Application.app_dir(:resolutionizer, "priv")
+    {"#{script_base_dir}/templates/#{template}/parchment_preview.sh", fn(input, output) ->
       [input, output]
     end, :jpg}
   end
