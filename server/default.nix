@@ -1,4 +1,5 @@
-{ gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf, imagemagickBig, ghostscript
+{ gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf, imagemagickBig,
+  ghostscript, glibcLocales
 }:
 let
   cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
@@ -14,10 +15,11 @@ in stdenv.mkDerivation rec {
     elixir makeWrapper wkhtmltopdf imagemagickBig ghostscript
   ];
 
-  # Elixir complains otherwise
-  # TODO: it is still complaining
+  # Need this to support the locale stuff
+  LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+  # Locale stuff, Elixir complains otherwise
   LANG = "en_US.UTF-8";
-  LC_CTYPE = "en_US.UTF-8";
+  LC_ALL = "en_US.UTF-8";
 
   buildPhase = ''
     export HOME=$TMPDIR
