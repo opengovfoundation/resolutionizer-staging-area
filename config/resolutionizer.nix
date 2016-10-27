@@ -4,6 +4,8 @@ with lib;
 
 let
   cfg = config.resolutionizer;
+
+  useLocalPostgres = cfg.dbHost == "localhost" || cfg.dbHost == "";
 in {
 
   options.resolutionizer = {
@@ -111,6 +113,8 @@ in {
     fonts.fonts = [ pkgs.corefonts ];
     fonts.fontconfig.ultimate.enable = false;
 
+    services.postgresql.enable = useLocalPostgres;
+
     services.nginx.enable = true;
     services.nginx.httpConfig = ''
       upstream phoenix_upstream {
@@ -172,12 +176,22 @@ in {
     systemd.services.resolutionizer-server = {
       description = "resolutionizer server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      after = [ "network.target" ] ++ optional useLocalPostgres "postgresql.service";
       # These are set here because the expressions do not resolve
       # correctly inside the deployment.keys.* attribute, the RDS endpoint
       # is empty
       environment.PGHOST = "${cfg.dbHost}";
       environment.DBURL="postgres://${cfg.dbUser}:${cfg.dbPass}@${cfg.dbHost}:${toString cfg.dbPort}/${cfg.dbName}";
+
+      preStart = ''
+        ${optionalString useLocalPostgres ''
+          if ! ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/psql -l | grep -q '${cfg.dbName}'; then
+            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/createuser --no-superuser --no-createdb --no-createrole ${cfg.dbUser} || true
+            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/psql -d postgres -c "ALTER USER ${cfg.dbUser} WITH PASSWORD '${cfg.dbPass}';" || true
+            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/createdb --owner ${cfg.dbUser} ${cfg.dbName} || true
+          fi
+        ''}
+      '';
 
       serviceConfig = {
         ExecStart = "${cfg.serverPackage}/bin/resolutionizer foreground";
@@ -185,6 +199,7 @@ in {
         User = "resolutionizer";
         Group = "resolutionizer";
         EnvironmentFile = "/run/keys/resolutionizer-environment";
+        PermissionsStartOnly = true; # preStart must be run as root
       };
     };
 
