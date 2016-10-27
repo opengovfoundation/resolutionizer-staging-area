@@ -96,6 +96,8 @@
     margin-right: 0;
     padding-right: 0;
     padding-top: 80px;
+
+    page-break-inside: avoid;
   }
 
   .signatures .signature {
