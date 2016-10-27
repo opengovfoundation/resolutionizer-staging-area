@@ -159,7 +159,7 @@ in {
             default = true;
             forceSSL = cfg.enableSSL;
             enableACME = cfg.enableSSL;
-            acmeRoot = "/var/www/challenges"; # TODO: this might need to be /var/www/challenges/acme-challenge
+            acmeRoot = "/var/www/challenges";
 
             locations."/" = {
               root = cfg.clientPackage;
