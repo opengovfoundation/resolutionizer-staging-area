@@ -18,7 +18,7 @@ defmodule Resolutionizer.DocResult do
     template = String.downcase(scope.template_name)
     script_base_dir = Application.app_dir(:resolutionizer, "priv")
     {"#{script_base_dir}/templates/#{template}/parchment_preview.sh", fn(input, output) ->
-      [input, output]
+      [input, output, script_base_dir]
     end, :jpg}
   end
 
