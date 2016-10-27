@@ -1,5 +1,5 @@
 { gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf, imagemagickBig,
-  ghostscript, glibcLocales
+  ghostscript, glibcLocales, pdftk
 }:
 let
   cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
