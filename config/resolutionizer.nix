@@ -90,6 +90,14 @@ in {
         The AWS region the S3 bucket is in.
       '';
     };
+
+    sslSupport = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Automatically grab SSL certs with letsencrypt and force TLS usage
+      '';
+    };
   };
 
   config = {
@@ -115,63 +123,46 @@ in {
 
     services.postgresql.enable = useLocalPostgres;
 
-    services.nginx.enable = true;
-    services.nginx.httpConfig = ''
-      upstream phoenix_upstream {
-        ip_hash;
-        server 127.0.0.1:${toString cfg.phoenixPort};
-      }
+    services.nginx = {
+      enable = true;
 
-      server {
-        server_name ${cfg.domainName};
-        listen 80 default; listen [::]:80;
+      recommendedOptimisation = true;
+      recommendedGzipSettings = true;
+      recommendedTlsSettings = cfg.sslSupport;
+      sslProtocols = "TLSv1.2 TLSv1.1 TLSv1";
+      sslCiphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:ECDHE-RSA-RC4-SHA:ECDHE-ECDSA-RC4-SHA:AES128:AES256:RC4-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK";
 
-        location ~ /.well-known {
-          root /var/www/challenges;
-          allow all;
+      virtualHosts = {
+        ${cfg.domainName} = {
+            default = true;
+            forceSSL = cfg.sslSupport;
+            enableACME = cfg.sslSupport;
+            acmeRoot = "/var/www/challenges"; # TODO: this might need to be /var/www/challenges/acme-challenge
+
+            locations."/" = {
+              root = cfg.clientPackage;
+              index = "index.html";
+              tryFiles = "$uri $uri/ /index.html";
+            };
+
+            locations."/api/" = {
+              proxyPass = "http://phoenix_upstream";
+              extraConfig = "proxy_redirect off;";
+            };
+
+            locations."/favicon.ico" = {
+              tryFiles = "$uri =204";
+            };
+        };
+      };
+
+      appendHttpConfig = ''
+        upstream phoenix_upstream {
+          ip_hash;
+          server 127.0.0.1:${toString cfg.phoenixPort};
         }
-
-        location / {
-          return 302 https://$host$request_uri;
-        }
-      }
-
-      server {
-        server_name ${cfg.domainName};
-        listen 443 ssl http2; listen [::]:443 ssl http2;
-
-        ssl_certificate         ${config.security.acme.directory}/${cfg.domainName}/fullchain.pem;
-        ssl_certificate_key     ${config.security.acme.directory}/${cfg.domainName}/key.pem;
-        # resolver 8.8.8.8;
-        # ssl_stapling on;
-        # ssl_stapling_verify on;
-        ssl_session_cache shared:SSL:10m;
-        ssl_session_timeout 5m;
-        ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
-        ssl_prefer_server_ciphers on;
-        ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:ECDHE-RSA-RC4-SHA:ECDHE-ECDSA-RC4-SHA:AES128:AES256:RC4-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!3DES:!MD5:!PSK;
-
-        location ~ /.well-known {
-          root /var/www/challenges;
-          allow all;
-        }
-
-        location / {
-          root ${cfg.clientPackage};
-          index index.html;
-          try_files $uri $uri/ /index.html;
-        }
-
-        location /api/ {
-          proxy_redirect off;
-          proxy_pass http://phoenix_upstream;
-        }
-
-        location = /favicon.ico {
-          try_files $uri =204;
-        }
-      }
-    '';
+      '';
+    };
 
     systemd.services.resolutionizer-server = {
       description = "resolutionizer server";
@@ -201,14 +192,6 @@ in {
         EnvironmentFile = "/run/keys/resolutionizer-environment";
         PermissionsStartOnly = true; # preStart must be run as root
       };
-    };
-
-    security.acme.certs."${cfg.domainName}" = {
-      webroot = "/var/www/challenges";
-      email = "developers@opengovfoundation.org";
-      group = "resolutionizer";
-      allowKeysForGroup = true;
-      postRun = "systemctl reload nginx.service";
     };
 
     services.xserver.enable = true;
