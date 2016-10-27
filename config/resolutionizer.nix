@@ -91,6 +91,26 @@ in {
       '';
     };
 
+    awsAccessKeyId = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = ''
+        The access key id to use for S3 access. If not set, the application
+        looks for IAM instance info, which of course won't work unless it is
+        running on EC2 and the machine as been configured with an IAM role.
+      '';
+    };
+
+    awsSecretAccessKey = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = ''
+        The access key secret to use for S3 access. If not set, the application
+        looks for IAM instance info, which of course won't work unless it is
+        running on EC2 and the machine as been configured with an IAM role.
+      '';
+    };
+
     sslSupport = mkOption {
       type = types.bool;
       default = true;
@@ -113,6 +133,8 @@ in {
       S3_BUCKET=${cfg.s3BucketName}
       APP_URL=${cfg.domainName}
       AWS_REGION=${cfg.awsRegion}
+      ${optionalString (cfg.awsAccessKeyId != null) "AWS_ACCESS_KEY_ID=${cfg.awsAccessKeyId}"}
+      ${optionalString (cfg.awsSecretAccessKey != null) "AWS_SECRET_ACCESS_KEY=${cfg.awsSecretAccessKey}"}
     '';
 
     environment.systemPackages = [ cfg.serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];
