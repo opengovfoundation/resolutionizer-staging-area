@@ -17,5 +17,5 @@ defmodule Resolutionizer.PDF.Template.Resolution do
     ]
   )
 
-  EEx.function_from_file :def, :render, "#{__DIR__}/resolution.html.eex", [:assigns]
+  EEx.function_from_file :def, :render, "#{__DIR__}/resolution/parchment.html.eex", [:assigns]
 end

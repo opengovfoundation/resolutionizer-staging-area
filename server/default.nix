@@ -12,7 +12,7 @@ in stdenv.mkDerivation rec {
   version = "0.1.0.0";
   src = builtins.filterSource cleanSource ./.;
   buildInputs = [
-    elixir makeWrapper wkhtmltopdf imagemagickBig ghostscript
+    elixir makeWrapper wkhtmltopdf pdftk imagemagickBig ghostscript
   ];
 
   # Need this to support the locale stuff
@@ -38,7 +38,7 @@ in stdenv.mkDerivation rec {
 
     mv $out/bin/resolutionizer $out/bin/resolutionizer-unwrapped
     makeWrapper $out/bin/resolutionizer-unwrapped $out/bin/resolutionizer \
-      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf erlang imagemagickBig ghostscript ]}:$PATH'
+      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf pdftk erlang imagemagickBig ghostscript ]}:$PATH'
 
     sed -i -e "s|awk|${gawk}/bin/awk|" $out/releases/0.0.1/resolutionizer.sh
     sed -i -e "s|which|${which}/bin/which|" $out/releases/0.0.1/resolutionizer.sh

@@ -21,7 +21,8 @@ config :resolutionizer, Resolutionizer.Repo,
   url: {:system, "DBURL"}
 
 config :arc,
-  bucket: {:system, "S3_BUCKET"}
+  bucket: {:system, "S3_BUCKET"},
+  version_timeout: 30_000
 
 config :ex_aws,
   region: {:system, "AWS_REGION"}

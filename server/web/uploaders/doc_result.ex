@@ -14,10 +14,12 @@ defmodule Resolutionizer.DocResult do
   end
 
   # Define a thumbnail transformation:
-  def transform(:preview, _) do
-    {:convert, fn(input, output) ->
-      "-density 150 -strip #{input} +append -quality 100 -background white -flatten png:#{output}"
-    end, :png}
+  def transform(:preview, {_file, scope}) do
+    template = String.downcase(scope.template_name)
+    script_base_dir = Application.app_dir(:resolutionizer, "priv")
+    {"#{script_base_dir}/templates/#{template}/parchment_preview.sh", fn(input, output) ->
+      [input, output, script_base_dir]
+    end, :jpg}
   end
 
   # Override the storage directory:
