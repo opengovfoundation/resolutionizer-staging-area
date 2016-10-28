@@ -2,9 +2,10 @@ module App.View exposing (..)
 
 import App.Model exposing (..)
 import App.Update exposing (..)
-import Html.App as Html
 import Html exposing (..)
+import Html.App as Html
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import States.EditDoc
 import States.Login
 import States.PageNotFound
@@ -27,13 +28,16 @@ viewHeader model =
 
         _ ->
             div [ class "app-header", attribute "role" "banner" ]
-                [ div [ class "logo" ]
+                [ div [ class "logo pull-left" ]
                     [ em [ class "logo-text" ]
                         [ a [ href "/" ]
                             [ span [ class "app-name" ] [ text "AssemblyWorks" ]
                             , text "City of Chicago Commemorative Resolutions"
                             ]
                         ]
+                    ]
+                , div [ class "new-button pull-right" ]
+                    [ button [ class "usa-button usa-button-gray", onClick NewDoc ] [ text "New Resolution" ]
                     ]
                 ]
 

@@ -1,4 +1,15 @@
-module States.EditDoc exposing (Msg, Route(..), State, stateToUrl, locationToRoute, update, init, view)
+module States.EditDoc
+    exposing
+        ( Msg
+        , Route(..)
+        , State
+        , stateToUrl
+        , locationToRoute
+        , doRoute
+        , update
+        , init
+        , view
+        )
 
 import Api.Doc
 import Date exposing (Date)
@@ -291,6 +302,62 @@ update msg state =
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
+
+
+doRoute : Route -> Maybe State -> ( State, Cmd Msg )
+doRoute route mState =
+    case mState of
+        Nothing ->
+            -- Entering EditDoc from another state
+            init Doc.emptyDoc
+
+        Just state ->
+            -- Changing routes inside an EditDoc state
+            doInternalRouteChange route state
+
+
+doInternalRouteChange : Route -> State -> ( State, Cmd Msg )
+doInternalRouteChange route state =
+    let
+        allowRouteChange =
+            ( { state | activeRoute = route }, Cmd.none )
+
+        rejectRouteChange =
+            ( state, Cmd.none )
+
+        allowIf validate =
+            if (List.isEmpty <| validate state.doc) then
+                allowRouteChange
+            else
+                rejectRouteChange
+    in
+        case state.activeRoute of
+            Meta ->
+                -- You can only go to the clauses from the meta route and only
+                -- if the data is valid
+                case route of
+                    Clauses ->
+                        allowIf validateMeta
+
+                    _ ->
+                        rejectRouteChange
+
+            Clauses ->
+                -- You can go backwards to meta route safely or forward to the
+                -- preview route only if the data is valid
+                case route of
+                    Meta ->
+                        allowRouteChange
+
+                    Clauses ->
+                        rejectRouteChange
+
+                    Preview ->
+                        allowIf validateClauses
+
+            Preview ->
+                -- You can navigate to anywhere from the Preview route
+                allowRouteChange
 
 
 view : State -> Html Msg

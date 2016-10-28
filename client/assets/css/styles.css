@@ -10,6 +10,8 @@
     padding: 0 1rem;
     min-height: 5rem;
     background: #f1f1f1;
+    position: relative;
+    overflow: hidden;
 }
 
 .app-header .logo {
@@ -212,4 +214,8 @@ img.document-preview-image {
 
 .pull-right {
     float: right;
+}
+
+.pull-left {
+    float: left;
 }
