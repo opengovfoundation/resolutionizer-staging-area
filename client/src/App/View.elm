@@ -37,7 +37,7 @@ viewHeader model =
                         ]
                     ]
                 , div [ class "new-button pull-right" ]
-                    [ button [ class "usa-button", onClick NewDoc ] [ text "New Resolution" ]
+                    [ button [ class "usa-button usa-button-gray", onClick NewDoc ] [ text "New Resolution" ]
                     ]
                 ]
 
