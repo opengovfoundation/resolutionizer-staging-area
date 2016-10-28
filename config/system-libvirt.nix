@@ -1,9 +1,4 @@
-{ dbUser
-, dbPass
-, dbName
-, dbPort ? 5432
-, phoenixPort ? 4000
-, awsRegion
+{ awsRegion
 , s3BucketName
 , domainName
 , awsAccessKeyId
@@ -20,15 +15,14 @@
         builds = import ../default.nix { inherit pkgs; };
         serverPackage = builds.server;
         clientPackage = builds.client;
-        dbHost = "localhost";
+        dbPass = "test";
       in
         {
           imports = [ ./resolutionizer.nix ];
 
           resolutionizer = {
-            inherit dbUser dbPass dbName dbPort phoenixPort domainName
-            serverPackage clientPackage dbHost s3BucketName awsRegion
-            awsAccessKeyId awsSecretAccessKey;
+            inherit dbPass domainName serverPackage clientPackage s3BucketName
+            awsRegion awsAccessKeyId awsSecretAccessKey;
             enableSSL = false;
           };
 

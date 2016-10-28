@@ -11,13 +11,16 @@ in {
   options.resolutionizer = {
     dbHost = mkOption {
       type = types.str;
+      default = "localhost";
       description = ''
-        Where the application can connect to the database.
+        Where the application can connect to the database. Setting this to
+        "localhost" or the empty string will setup a local database for use.
       '';
     };
 
     dbName = mkOption {
       type = types.str;
+      default = "resolutionizer";
       description = ''
         The database to use.
       '';
@@ -40,6 +43,7 @@ in {
 
     dbUser = mkOption {
       type = types.str;
+      default = "resolutionizer";
       description = ''
         The database user to use when connecting to the database.
       '';
