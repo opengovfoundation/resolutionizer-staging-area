@@ -75,23 +75,18 @@ update msg model =
 
                     EditDocR route' ->
                         let
-                            -- TODO: move this stuff into the EditDoc module? Some
-                            -- routes we may be able to just go to, others we may
-                            -- want to forbid users from just jumping to them (e.g.
-                            -- filling out clauses before the details), that logic
-                            -- has to live somewhere when we implement it
-                            ( editDocState, editDocCmd ) =
+                            currentEditDocState =
                                 case model.activeState of
                                     EditDoc state ->
-                                        ( state, Cmd.none )
+                                        Just state
 
                                     _ ->
-                                        (States.EditDoc.init Doc.emptyDoc)
+                                        Nothing
 
-                            newActiveState =
-                                EditDoc { editDocState | activeRoute = route' }
+                            ( editDocState, editDocCmd ) =
+                                States.EditDoc.doRoute route' currentEditDocState
                         in
-                            ( { model | activeState = newActiveState }, Cmd.map EditDocMsg editDocCmd )
+                            ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmd )
 
         LoggedIn ->
             let
