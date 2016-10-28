@@ -49,7 +49,7 @@ viewState model =
             Html.map loginTranslator <| States.Login.view state
 
         EditDoc state ->
-            Html.map EditDocMsg <| States.EditDoc.view state
+            Html.map editDocTranslator <| States.EditDoc.view state
 
         PageNotFound ->
             Html.map (always NoOp) <| States.PageNotFound.view

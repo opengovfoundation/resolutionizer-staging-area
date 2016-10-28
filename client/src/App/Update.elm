@@ -2,6 +2,7 @@ module App.Update exposing (..)
 
 import App.Model exposing (..)
 import Doc
+import Navigation
 import States.EditDoc
 import States.Login
 
@@ -11,11 +12,12 @@ type Msg
     | SetActiveRoute Route
     | LoggedIn
     | LoginMsg States.Login.InternalMsg
-    | EditDocMsg States.EditDoc.Msg
+    | EditDocMsg States.EditDoc.InternalMsg
     | NewDoc
+    | HistoryBack
 
 
-loginTranslationDictionary : { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
+loginTranslationDictionary : States.Login.TranslationDictionary Msg
 loginTranslationDictionary =
     { onInternalMessage = LoginMsg
     , onLoggedIn = LoggedIn
@@ -25,6 +27,18 @@ loginTranslationDictionary =
 loginTranslator : States.Login.Translator Msg
 loginTranslator =
     States.Login.translator loginTranslationDictionary
+
+
+editDocTranslationDictionary : States.EditDoc.TranslationDictionary Msg
+editDocTranslationDictionary =
+    { onInternalMessage = EditDocMsg
+    , onHistoryBack = HistoryBack
+    }
+
+
+editDocTranslator : States.EditDoc.Translator Msg
+editDocTranslator =
+    States.EditDoc.translator editDocTranslationDictionary
 
 
 init : ( Model, Cmd Msg )
@@ -57,7 +71,7 @@ update msg model =
                         ( editDocState, editDocCmds ) =
                             States.EditDoc.update msg' state
                     in
-                        ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmds )
+                        ( { model | activeState = EditDoc editDocState }, Cmd.map editDocTranslator editDocCmds )
 
                 _ ->
                     ( model, Cmd.none )
@@ -86,7 +100,7 @@ update msg model =
                             ( editDocState, editDocCmd ) =
                                 States.EditDoc.doRoute route' currentEditDocState
                         in
-                            ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmd )
+                            ( { model | activeState = EditDoc editDocState }, Cmd.map editDocTranslator editDocCmd )
 
         LoggedIn ->
             let
@@ -97,7 +111,7 @@ update msg model =
                     | activeState = EditDoc editDocState
                     , isLoggedIn = True
                   }
-                , Cmd.map EditDocMsg editDocCmd
+                , Cmd.map editDocTranslator editDocCmd
                 )
 
         NewDoc ->
@@ -105,4 +119,7 @@ update msg model =
                 ( editDocState, editDocCmd ) =
                     States.EditDoc.init Doc.emptyDoc
             in
-                ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmd )
+                ( { model | activeState = EditDoc editDocState }, Cmd.map editDocTranslator editDocCmd )
+
+        HistoryBack ->
+            ( model, Navigation.back 1 )
