@@ -12,6 +12,7 @@ type Msg
     | LoggedIn
     | LoginMsg States.Login.InternalMsg
     | EditDocMsg States.EditDoc.Msg
+    | NewDoc
 
 
 loginTranslationDictionary : { onInternalMessage : States.Login.InternalMsg -> Msg, onLoggedIn : Msg }
@@ -103,3 +104,10 @@ update msg model =
                   }
                 , Cmd.map EditDocMsg editDocCmd
                 )
+
+        NewDoc ->
+            let
+                ( editDocState, editDocCmd ) =
+                    States.EditDoc.init Doc.emptyDoc
+            in
+                ( { model | activeState = EditDoc editDocState }, Cmd.map EditDocMsg editDocCmd )
