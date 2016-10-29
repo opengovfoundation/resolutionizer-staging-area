@@ -23,7 +23,7 @@ for f in $data_files; do
 
   echo "Downloading resulting files"
   curl -s $original_url > $result_dir/${file_base}_original.pdf
-  curl -s $preview_url > $result_dir/${file_base}_preview.png
+  curl -s $preview_url > $result_dir/${file_base}_preview.jpg
 
   rm $tmpfile
   echo "-----"
