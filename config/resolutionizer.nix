@@ -202,10 +202,15 @@ in {
 
       preStart = ''
         ${optionalString useLocalPostgres ''
-          if ! ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/psql -l | grep -q '${cfg.dbName}'; then
-            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/createuser --no-superuser --no-createdb --no-createrole ${cfg.dbUser} || true
-            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/psql -d postgres -c "ALTER USER ${cfg.dbUser} WITH PASSWORD '${cfg.dbPass}';" || true
-            ${pkgs.sudo}/bin/sudo ${pkgs.postgresql}/bin/createdb --owner ${cfg.dbUser} ${cfg.dbName} || true
+          unset PGUSER
+          unset PGPASSWORD
+          unset PGDATABASE
+          unset PGPORT
+          unset PGHOST
+          if ! ${pkgs.postgresql}/bin/psql -w -l | grep -q '${cfg.dbName}'; then
+            ${pkgs.postgresql}/bin/createuser -w --no-superuser --no-createdb --no-createrole ${cfg.dbUser} || true
+            ${pkgs.postgresql}/bin/psql -d postgres -c "ALTER USER ${cfg.dbUser} WITH PASSWORD '${cfg.dbPass}';" || true
+            ${pkgs.postgresql}/bin/createdb -w --owner ${cfg.dbUser} ${cfg.dbName} || true
           fi
         ''}
       '';
