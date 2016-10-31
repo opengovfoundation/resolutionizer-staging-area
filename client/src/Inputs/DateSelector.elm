@@ -2,9 +2,9 @@ module Inputs.DateSelector
     exposing
         ( Model
         , Msg
-        , InternalMsg
-        , Translator
-        , TranslationDictionary
+        , Internal
+        , Tagger
+        , Dictionary
         , DefaultTo(..)
         , translator
         , init
@@ -55,11 +55,11 @@ type State
         }
 
 
-type OutMsg
+type Outgoing
     = SelectOut Date
 
 
-type InternalMsg
+type Internal
     = Select Date
     | Toggle
     | Init Date
@@ -67,27 +67,27 @@ type InternalMsg
 
 
 type Msg
-    = ForSelf InternalMsg
-    | ForParent OutMsg
+    = InMsg Internal
+    | OutMsg Outgoing
 
 
-type alias TranslationDictionary msg =
-    { onInternalMessage : InternalMsg -> msg
+type alias Dictionary msg =
+    { onInternalMessage : Internal -> msg
     , onDateSelected : Date -> msg
     }
 
 
-type alias Translator parentMsg =
+type alias Tagger parentMsg =
     Msg -> parentMsg
 
 
-translator : TranslationDictionary parentMsg -> Translator parentMsg
+translator : Dictionary parentMsg -> Tagger parentMsg
 translator { onInternalMessage, onDateSelected } msg =
     case msg of
-        ForSelf internal ->
+        InMsg internal ->
             onInternalMessage internal
 
-        ForParent (SelectOut date) ->
+        OutMsg (SelectOut date) ->
             onDateSelected date
 
 
@@ -109,7 +109,7 @@ usConfig =
 init : Config -> ( Model, Cmd Msg )
 init conf =
     ( { config = conf, state = Uninitialized }
-    , Util.performFailproof (ForSelf << Init) Date.now
+    , Util.performFailproof (InMsg << Init) Date.now
     )
 
 
@@ -131,7 +131,7 @@ initRunning model now =
         { model | state = runningState }
 
 
-update : InternalMsg -> Model -> ( Model, Cmd Msg )
+update : Internal -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.state of
         Uninitialized ->
@@ -144,11 +144,11 @@ update msg model =
                         cmdForSelected =
                             case model.config.defaultTo of
                                 Now ->
-                                    Util.msgToCmd (ForSelf <| Select today)
+                                    Util.msgToCmd (InMsg <| Select today)
 
                                 Run cmd' ->
                                     Util.performFailproof
-                                        (ForSelf
+                                        (InMsg
                                             << Select
                                             << Maybe.withDefault today
                                         )
@@ -166,7 +166,7 @@ update msg model =
                         clampedDate =
                             Date.clamp state.minimumDate state.maximumDate date
                     in
-                        ( { model | state = Running { state | selected = Just clampedDate } }, Util.msgToCmd (ForParent <| SelectOut clampedDate) )
+                        ( { model | state = Running { state | selected = Just clampedDate } }, Util.msgToCmd (OutMsg <| SelectOut clampedDate) )
 
                 Toggle ->
                     ( { model | state = Running { state | dropdownOpen = not state.dropdownOpen } }, Cmd.none )
@@ -184,8 +184,8 @@ view model =
         Running state ->
             DateSelectorDropdown.viewWithButton
                 (viewDateSelectorInput model.config)
-                (ForSelf <| Toggle)
-                (ForSelf << Select)
+                (InMsg <| Toggle)
+                (InMsg << Select)
                 state.dropdownOpen
                 state.minimumDate
                 state.maximumDate
@@ -199,6 +199,6 @@ viewDateSelectorInput config isOpen selected =
         , name config.inputName
         , readonly True
         , autocomplete False
-        , onClick (ForSelf <| Toggle)
+        , onClick (InMsg <| Toggle)
         ]
         []

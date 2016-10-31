@@ -46,10 +46,10 @@ viewState : Model -> Html Msg
 viewState model =
     case model.activeState of
         Login state ->
-            Html.map loginTranslator <| States.Login.view state
+            Html.map loginTagger <| States.Login.view state
 
         EditDoc state ->
-            Html.map editDocTranslator <| States.EditDoc.view state
+            Html.map editDocTagger <| States.EditDoc.view state
 
         PageNotFound ->
             Html.map (always NoOp) <| States.PageNotFound.view
