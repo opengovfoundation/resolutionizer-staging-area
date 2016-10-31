@@ -12,7 +12,14 @@ build: ## Builds application into $(BUILDDIR)
 	cp -r node_modules/uswds/dist/* $(BUILDDIR)/assets/
 
 
-install: build
+build-prod: build
+build-prod: ## Builds application in $(BUILDDIR), w/ optimizations
+	mv $(BUILDDIR)/elm.js $(BUILDDIR)/elm-unoptimized.js
+	closure-compiler --js $(BUILDDIR)/elm-unoptimized.js --js_output_file $(BUILDDIR)/elm.js --compilation_level SIMPLE
+	rm $(BUILDDIR)/elm-unoptimized.js
+
+
+install:
 install: ## Puts build files into $(DESTDIR)
 	mkdir -p $(DESTDIR)
 	cp -r $(BUILDDIR)/* $(DESTDIR)

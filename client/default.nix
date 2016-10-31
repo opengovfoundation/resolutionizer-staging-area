@@ -1,18 +1,18 @@
-{ elm-compiler, elm-make, elm-package, nodejs, npm, stdenv
+{ closurecompiler, elm-compiler, elm-make, elm-package, nodejs, npm, stdenv
 }:
 stdenv.mkDerivation rec {
   name = "resolutionizer-client-${version}";
   version = "0.1.0.0";
   src = ./.;
   buildInputs = [
-    elm-compiler elm-make elm-package nodejs npm
+    closurecompiler elm-compiler elm-make elm-package nodejs npm
   ];
 
   buildPhase = ''
     HOME=$TMPDIR
     make deps
     make clean
-    make build
+    make build-prod
   '';
 
   installPhase = ''
