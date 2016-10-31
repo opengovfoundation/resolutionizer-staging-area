@@ -13,11 +13,11 @@ type alias State =
     }
 
 
-type OutMsg
+type Outgoing
     = LoggedIn
 
 
-type InternalMsg
+type Internal
     = NoOp
     | UpdateUsername String
     | UpdatePassword String
@@ -25,27 +25,27 @@ type InternalMsg
 
 
 type Msg
-    = ForSelf InternalMsg
-    | ForParent OutMsg
+    = InMsg Internal
+    | OutMsg Outgoing
 
 
-type alias TranslationDictionary msg =
-    { onInternalMessage : InternalMsg -> msg
+type alias Dictionary msg =
+    { onInternalMessage : Internal -> msg
     , onLoggedIn : msg
     }
 
 
-type alias Translator parentMsg =
+type alias Tagger parentMsg =
     Msg -> parentMsg
 
 
-translator : TranslationDictionary parentMsg -> Translator parentMsg
+translator : Dictionary parentMsg -> Tagger parentMsg
 translator { onInternalMessage, onLoggedIn } msg =
     case msg of
-        ForSelf internal ->
+        InMsg internal ->
             onInternalMessage internal
 
-        ForParent LoggedIn ->
+        OutMsg LoggedIn ->
             onLoggedIn
 
 
@@ -57,7 +57,7 @@ init =
     }
 
 
-update : InternalMsg -> State -> ( State, Cmd Msg )
+update : Internal -> State -> ( State, Cmd Msg )
 update msg state =
     case msg of
         NoOp ->
@@ -76,7 +76,7 @@ update msg state =
             in
                 ( { state | error = not validCredentials }
                 , if validCredentials then
-                    Util.msgToCmd (ForParent LoggedIn)
+                    Util.msgToCmd (OutMsg LoggedIn)
                   else
                     Cmd.none
                 )
@@ -104,13 +104,13 @@ view state =
              else
                 []
             )
-        , Html.form [ class "usa-form center-block", onSubmit (ForSelf TryLogin) ]
+        , Html.form [ class "usa-form center-block", onSubmit (InMsg TryLogin) ]
             [ fieldset []
                 [ legend [] [ text "Login" ]
                 , label [ for "username" ] [ text "Username" ]
-                , input [ id "username", name "username", type' "text", onInput (ForSelf << UpdateUsername) ] []
+                , input [ id "username", name "username", type' "text", onInput (InMsg << UpdateUsername) ] []
                 , label [ for "password" ] [ text "Password" ]
-                , input [ id "password", name "password", type' "password", onInput (ForSelf << UpdatePassword) ] []
+                , input [ id "password", name "password", type' "password", onInput (InMsg << UpdatePassword) ] []
                 , button
                     [ classList
                         [ ( "usa-button-disabled", state.username == "" || state.password == "" ) ]

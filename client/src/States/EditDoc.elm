@@ -1,11 +1,15 @@
 module States.EditDoc
     exposing
         ( Msg
+        , Internal
         , Route(..)
         , State
         , stateToUrl
         , locationToRoute
         , doRoute
+        , translator
+        , Dictionary
+        , Tagger
         , update
         , init
         , view
@@ -61,7 +65,11 @@ type alias SponsorInput =
     }
 
 
-type Msg
+type Outgoing
+    = HistoryBack
+
+
+type Internal
     = SetSelectedClauseType Doc.ClauseType
     | UpdateTitle String
     | NewClause
@@ -70,7 +78,7 @@ type Msg
     | SetActiveRoute Route
     | NewSponsorInput
     | SponsorInputChange Int (Maybe String)
-    | DateSelectorMsg Inputs.DateSelector.InternalMsg
+    | DateSelectorMsg Inputs.DateSelector.Internal
     | MeetingDateSelected Date
     | NoOp
     | RequestPdf
@@ -78,16 +86,41 @@ type Msg
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
 
 
-dateSelectorTranslationDictionary : Inputs.DateSelector.TranslationDictionary Msg
-dateSelectorTranslationDictionary =
+type Msg
+    = InMsg Internal
+    | OutMsg Outgoing
+
+
+type alias Dictionary msg =
+    { onInternalMessage : Internal -> msg
+    , onHistoryBack : msg
+    }
+
+
+type alias Tagger parentMsg =
+    Msg -> parentMsg
+
+
+translator : Dictionary parentMsg -> Tagger parentMsg
+translator { onInternalMessage, onHistoryBack } msg =
+    case msg of
+        InMsg internal ->
+            onInternalMessage internal
+
+        OutMsg HistoryBack ->
+            onHistoryBack
+
+
+dateSelectorDictionary : Inputs.DateSelector.Dictionary Internal
+dateSelectorDictionary =
     { onInternalMessage = DateSelectorMsg
     , onDateSelected = MeetingDateSelected
     }
 
 
-dateSelectorTranslator : Inputs.DateSelector.Translator Msg
-dateSelectorTranslator =
-    Inputs.DateSelector.translator dateSelectorTranslationDictionary
+dateSelectorTagger : Inputs.DateSelector.Tagger Internal
+dateSelectorTagger =
+    Inputs.DateSelector.translator dateSelectorDictionary
 
 
 init : Doc.Model -> ( State, Cmd Msg )
@@ -136,7 +169,7 @@ init doc =
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
           }
-        , Cmd.map dateSelectorTranslator dateSelectorCmd
+        , Cmd.map (InMsg << dateSelectorTagger) dateSelectorCmd
         )
 
 
@@ -171,7 +204,7 @@ locationToRoute urlPrefix location =
             Nothing
 
 
-update : Msg -> State -> ( State, Cmd Msg )
+update : Internal -> State -> ( State, Cmd Msg )
 update msg state =
     case msg of
         SetSelectedClauseType clauseType ->
@@ -201,7 +234,7 @@ update msg state =
                   -- add a delay to mitigate situations where it doesn't work if
                   -- they come up or actually handle the failure case and retry
                   -- a few times
-                , Task.perform (always NoOp) (always NoOp) (Dom.focus (clauseHtmlId newClause))
+                , Task.perform (always <| InMsg NoOp) (always <| InMsg NoOp) (Dom.focus (clauseHtmlId newClause))
                 )
 
         UpdateClause id content' ->
@@ -279,7 +312,7 @@ update msg state =
                 ( dateSelectorModel, dateSelectorCmd ) =
                     Inputs.DateSelector.update msg' state.dateSelector
             in
-                ( { state | dateSelector = dateSelectorModel }, Cmd.map dateSelectorTranslator dateSelectorCmd )
+                ( { state | dateSelector = dateSelectorModel }, Cmd.map (InMsg << dateSelectorTagger) dateSelectorCmd )
 
         MeetingDateSelected date ->
             let
@@ -295,10 +328,10 @@ update msg state =
             ( state, Cmd.none )
 
         DoPreview ->
-            ( state, Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
+            ( state, Cmd.map InMsg <| Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
 
         RequestPdf ->
-            ( state, Api.Doc.create PreviewResponse state.doc )
+            ( state, Api.Doc.create (InMsg << PreviewResponse) state.doc )
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
@@ -385,7 +418,7 @@ viewMetaRoute state =
     div []
         [ p [] [ text "Enter the details of the Commemorative Resolution below." ]
         , viewMeta state
-        , lazy (viewNextButton validateMeta (SetActiveRoute Clauses) "Continue") state.doc
+        , lazy (viewNextButton validateMeta (InMsg <| SetActiveRoute Clauses) "Continue") state.doc
         ]
 
 
@@ -404,7 +437,8 @@ viewClauseRoute state =
             ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
-        , lazy (viewNextButton validateClauses DoPreview "Preview") state.doc
+        , lazy (viewNextButton validateClauses (InMsg <| DoPreview) "Preview") state.doc
+        , viewBackButton
         ]
 
 
@@ -430,6 +464,7 @@ viewPreviewRequest request =
         RemoteData.Success { id, urls } ->
             div []
                 [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+                , viewBackButton
                 , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]
                 ]
 
@@ -439,11 +474,11 @@ viewMeta state =
     div [ class "form-horizontal" ]
         [ div [ class "usa-grid-full" ]
             [ label [ for "title", class "usa-width-one-sixth" ] [ text "Resolution Title" ]
-            , textarea [ id "title", value state.doc.title, onInput UpdateTitle, class "usa-width-five-sixths" ] []
+            , textarea [ id "title", value state.doc.title, onInput (InMsg << UpdateTitle), class "usa-width-five-sixths" ] []
             ]
         , div []
             [ label [ for "meeting-date", class "usa-width-one-sixth" ] [ text "Meeting Date" ]
-            , Html.map dateSelectorTranslator <| Inputs.DateSelector.view state.dateSelector
+            , Html.map (InMsg << dateSelectorTagger) <| Inputs.DateSelector.view state.dateSelector
             ]
         , viewSponsors state
         ]
@@ -455,7 +490,14 @@ viewSponsors state =
         [ legend [ class "usa-width-one-sixth" ] [ text "Sponsors" ]
         , div [ class "usa-width-five-sixths" ]
             [ viewSponsorSelectors state
-            , button [ class "usa-button-plain add-sponsor", onClick NewSponsorInput ] [ text "Add sponsor" ]
+            , button
+                [ class "usa-button-plain add-sponsor"
+                , onClick
+                    (InMsg <|
+                        NewSponsorInput
+                    )
+                ]
+                [ text "Add sponsor" ]
             ]
         ]
 
@@ -464,7 +506,7 @@ viewSponsorSelectors : State -> Html Msg
 viewSponsorSelectors state =
     lazy
         (div []
-            << List.map (\( id, sponsorInput ) -> sponsorSelect state.doc sponsorInput.value (SponsorInputChange id))
+            << List.map (\( id, sponsorInput ) -> sponsorSelect state.doc sponsorInput.value (InMsg << SponsorInputChange id))
             << List.sortBy (.pos << snd)
             << Dict.toList
         )
@@ -522,13 +564,13 @@ viewClause doc clause =
                 [ label [ class "clause-label", for clauseId ] [ clauseTypeFormatter doc clause.ctype ]
                 , button
                     [ class "usa-button-plain delete"
-                    , onClick (DeleteClause clause.id)
+                    , onClick (InMsg <| DeleteClause clause.id)
                     ]
                     []
                 , textarea
                     [ id clauseId
                     , value clause.content
-                    , onInput (UpdateClause clause.id)
+                    , onInput (InMsg << UpdateClause clause.id)
                     ]
                     []
                 ]
@@ -539,7 +581,7 @@ viewClauseTypeSelector : Doc.Model -> Doc.ClauseType -> Html Msg
 viewClauseTypeSelector doc selectedNewClauseType =
     div [ class "add-selector" ]
         [ clauseTypeSelect doc selectedNewClauseType
-        , button [ class "usa-button-plain add", onClick (NewClause) ] []
+        , button [ class "usa-button-plain add", onClick (InMsg <| NewClause) ] []
         ]
 
 
@@ -549,7 +591,7 @@ clauseTypeSelect doc selectedClauseType =
         determineSelectedClauseType =
             Maybe.withDefault doc.defaultClauseType << flip Maybe.andThen (Doc.getClauseTypeFromDisplayName doc)
     in
-        select [ Exts.Html.Events.onSelect (SetSelectedClauseType << determineSelectedClauseType) ] <|
+        select [ Exts.Html.Events.onSelect (InMsg << SetSelectedClauseType << determineSelectedClauseType) ] <|
             List.map
                 (\clauseType ->
                     option
@@ -579,6 +621,15 @@ viewNextButton validate onClickValidMsg btnText doc =
             , onClick onClickValidMsg
             ]
             [ text btnText ]
+
+
+viewBackButton : Html Msg
+viewBackButton =
+    button
+        [ class "pull-left usa-button usa-button-outline"
+        , onClick (OutMsg HistoryBack)
+        ]
+        [ text "Back" ]
 
 
 validateMeta : Validator String Doc.Model
