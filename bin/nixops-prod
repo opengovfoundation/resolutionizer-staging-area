@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+export NIXOPS_STATE=../resolutionizer-private/secrets/state.nixops
+
+nixops "$@"
