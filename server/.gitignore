@@ -26,3 +26,5 @@ erl_crash.dump
 
 # Release directory
 rel/resolutionizer
+
+test/integration/_docgentest-results

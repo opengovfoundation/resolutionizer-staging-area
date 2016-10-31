@@ -1,7 +1,8 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p curl jq gnused
 
-data_files=./bin/docgentest_data/*
-result_dir=./_docgentest-results
+data_files=$(dirname $0)/../docgentest_data/*
+result_dir=$(dirname $0)/../_docgentest-results
 mkdir -p $result_dir
 
 echo "Here we go!"
@@ -9,7 +10,7 @@ echo "------"
 
 for f in $data_files; do
   tmpfile=$(mktemp --tmpdir resolutionizer_response-XXXXXXXXX.json)
-  file_base=`echo $f | sed -n -r 's/.+data\/(.*)\.json/\1/p'`
+  file_base=$(echo $f | sed -n -r 's/.+data\/(.*)\.json/\1/p')
 
   echo "Processing: ${f}"
 
@@ -18,8 +19,8 @@ for f in $data_files; do
 
   sleep 1 # takes a second to write that file
 
-  original_url=`jq -r ".document.urls.original" $tmpfile`
-  preview_url=`jq -r ".document.urls.preview" $tmpfile`
+  original_url=$(jq -r ".document.urls.original" $tmpfile)
+  preview_url=$(jq -r ".document.urls.preview" $tmpfile)
 
   echo "Downloading resulting files"
   curl -s $original_url > $result_dir/${file_base}_original.pdf
@@ -29,4 +30,4 @@ for f in $data_files; do
   echo "-----"
 done
 
-echo "Done! Results are in ${result_dir}!"
+echo "Done! Results are in $(readlink -f $result_dir)!"
