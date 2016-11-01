@@ -1,0 +1,55 @@
+{
+  "document": {
+    "data": {
+      "clauses": [
+        {
+          "content": "Hexagon raw denim four dollar toast, meditation letterpress pop-up pabst ennui flexitarian stumptown plaid la croix put a bird on it gochujang. Cred banjo narwhal, intelligentsia flannel meh poutine tbh man braid try-hard la croix blog vinyl waistcoat.",
+          "type": "Whereas"
+        },
+        {
+          "content": "Vinyl neutra lyft craft beer portland hell of. Post-ironic chia farm-to-table, selvage gochujang blue bottle craft beer kickstarter squid hammock umami gentrify pug bicycle rights.  Williamsburg health goth farm-to-table portland freegan DIY.",
+          "type": "Whereas"
+        },
+        {
+          "content": "Whatever butcher glossier squid, YOLO banjo lumbersexual copper mug ugh biodiesel scenester helvetica. Photo booth mlkshk pabst organic taxidermy normcore. Hella YOLO fanny pack ramps fam gluten-free. ",
+          "type": "Whereas"
+        },
+        {
+          "content": "Hexagon raw denim four dollar toast, meditation letterpress pop-up pabst ennui flexitarian stumptown plaid la croix put a bird on it gochujang. Cred banjo narwhal, intelligentsia flannel meh poutine tbh man braid try-hard la croix blog vinyl waistcoat.",
+          "type": "Whereas"
+        },
+        {
+          "content": "Vinyl neutra lyft craft beer portland hell of. Post-ironic chia farm-to-table, selvage gochujang blue bottle craft beer kickstarter squid hammock umami gentrify pug bicycle rights.  Williamsburg health goth farm-to-table portland freegan DIY.",
+          "type": "Whereas"
+        },
+        {
+          "content": "Whatever butcher glossier squid, YOLO banjo lumbersexual copper mug ugh biodiesel scenester helvetica. Photo booth mlkshk pabst organic taxidermy normcore. Hella YOLO fanny pack ramps fam gluten-free. ",
+          "type": "Whereas"
+        },
+        {
+          "content": "Pork belly brunch neutra lomo tote bag 3 wolf moon. VHS paleo polaroid, normcore cronut trust fund heirloom. Beard iPhone tote bag truffaut yuccie post-ironic hell of four dollar toast, man bun semiotics ethical mlkshk flannel farm-to-table.",
+          "type": "Be it resolved"
+        },
+        {
+          "content": "Hexagon raw denim four dollar toast, meditation letterpress pop-up pabst ennui flexitarian stumptown plaid la croix put a bird on it gochujang. Cred banjo narwhal, intelligentsia flannel meh poutine tbh man braid try-hard la croix blog vinyl waistcoat.",
+          "type": "Be it further resolved"
+        },
+        {
+          "content": "Wolf tattooed subway tile venmo, mumblecore gochujang poke ethical. Crucifix kitsch keffiyeh affogato man bun four loko.  Pour-over roof party pop-up, artisan +1 af cornhole cred. Williamsburg schlitz skateboard tote bag fap biodiesel.",
+          "type": "Be it further resolved"
+        }
+      ],
+      "meeting_date": "2016-10-27",
+      "sponsors": [
+        "Arena, John (45)",
+        "Brookins, Jr., Howard (21)",
+        "Ervin, Jason C. (28)",
+        "Maldonado, Roberto (26)",
+        "Cardenas, George A. (12)",
+        "Sadlowski Garza, Susan (10)"
+      ]
+    },
+    "template_name": "Resolution",
+    "title": "This is a test resolution"
+  }
+}
