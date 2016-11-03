@@ -20,6 +20,10 @@ config :resolutionizer, Resolutionizer.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: {:system, "DBURL"}
 
+config :resolutionizer, Resolutionizer.Legistar,
+  client: {:system, "LEGISTAR_CLIENT"},
+  key: {:system, "LEGISTAR_KEY"}
+
 config :arc,
   bucket: {:system, "S3_BUCKET"},
   version_timeout: 30_000
