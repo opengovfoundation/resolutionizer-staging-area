@@ -68,7 +68,7 @@ defmodule Resolutionizer.Legistar do
     # by just the last part of the MatterFile name?
     last_matter =
       client
-      |> Legistar.Api.get("/Matters", query: ["$filter": "MatterTypeName eq 'Resolution' and MatterIntroDate ge datetime'#{meeting_year_str}' and MatterIntroDate lt datetime'#{next_year_str}'" , "$orderby": "MatterIntroDate desc,MatterId desc" , "$top": "1" , "$select": "MatterFile"])
+      |> Legistar.Api.get("/Matters", query: ["$filter": "MatterTypeName eq 'Resolution' and MatterIntroDate ge datetime'#{meeting_year_str}' and MatterIntroDate lt datetime'#{next_year_str}'" , "$orderby": "MatterId desc" , "$top": "1" , "$select": "MatterFile"])
       |> Map.get(:body)
 
     seq_id =
