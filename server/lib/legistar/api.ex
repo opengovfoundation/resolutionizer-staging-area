@@ -1,6 +1,6 @@
 defmodule Legistar.Api do
   @moduledoc """
-  Provides convenience methods for construction requests to the Legistar API
+  Provides convenience methods for constructing requests to the Legistar API
   """
 
   use Tesla
@@ -14,7 +14,7 @@ defmodule Legistar.Api do
   def client(client, key) do
     Tesla.build_client [
       {Tesla.Middleware.BaseUrl, @base_url_start <> "/#{client}"},
-      {Tesla.Middleware.Query, [key: key]} # TODO: however we actually set the key
+      {Tesla.Middleware.Query, [key: key]}
     ]
   end
 end

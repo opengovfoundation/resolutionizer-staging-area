@@ -52,7 +52,8 @@ defmodule Resolutionizer.Mixfile do
      {:sweet_xml, "~> 0.5"},
      {:mock, "~> 0.1.1", only: :test},
      {:temp, "~> 0.4.1"},
-     {:tesla, "~> 0.5.0"}]
+     {:tesla, "~> 0.5.0"},
+     {:uuid, "~> 1.1"}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
