@@ -113,10 +113,9 @@ defmodule Resolutionizer.Legistar do
         "MatterAttachmentName": "#{matter_file_id}.pdf",
         "MatterAttachmentFileName": "#{UUID.uuid4()}.pdf",
         "MatterAttachmentBinary": Base.encode64(matter_pdf_content) # TODO: need to base64 encode?
-        # "MatterAttachmentBinary": matter_pdf_content
       }
 
-      matter_attachment_id =
+      _matter_attachment_id =
         client
         |> Legistar.Api.post("/Matters/#{legistar_matter_id}/Attachments", matter_attachment)
         |> Map.get(:body)
