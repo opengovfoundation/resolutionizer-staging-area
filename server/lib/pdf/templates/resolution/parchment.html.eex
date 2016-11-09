@@ -13,7 +13,7 @@
   * { background: rgba(0,0,0,0); }
 
   body {
-    padding: 182px 0 0 0;
+    padding: 183px 0 0 0;
 
     font-family: "Georgia";
     font-size: 10px;
