@@ -13,7 +13,7 @@
   * { background: rgba(0,0,0,0); }
 
   body {
-    padding: 49mm 0 0 0;
+    padding: 183px 0 0 0;
 
     font-family: "Georgia";
     font-size: 10px;
@@ -48,11 +48,11 @@
   .date {
     position: absolute;
     top: 140px;
-    right: 0;
+    right: -15px;
 
-    width: 27%;
+    width: 30%;
 
-    text-align: right;
+    text-align: center;
   }
 
 
@@ -71,7 +71,7 @@
   }
 
   .main p:first-child {
-    text-indent: 80px;
+    text-indent: 76px;
   }
 
   .main p:first-child .clause {
