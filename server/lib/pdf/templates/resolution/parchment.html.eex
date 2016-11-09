@@ -13,7 +13,7 @@
   * { background: rgba(0,0,0,0); }
 
   body {
-    padding: 48mm 0 0 0;
+    padding: 182px 0 0 0;
 
     font-family: "Georgia";
     font-size: 10px;
@@ -71,7 +71,7 @@
   }
 
   .main p:first-child {
-    text-indent: 78px;
+    text-indent: 76px;
   }
 
   .main p:first-child .clause {
