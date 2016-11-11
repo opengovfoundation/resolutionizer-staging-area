@@ -34,6 +34,7 @@ import Http
 import Inputs.DateSelector
 import Json.Decode as Decode
 import Navigation exposing (Location)
+import Regex
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
 import Task
@@ -240,7 +241,7 @@ update msg state =
         UpdateClause id content' ->
             let
                 updateClause =
-                    Maybe.map (\c -> { c | content = content' })
+                    Maybe.map (\c -> { c | content = sanitizeClauseContent content' })
 
                 doc =
                     state.doc
@@ -665,6 +666,45 @@ validateClauseTypes clauses =
                 [ "Whereas"
                 , "BeItResolved"
                 ]
+
+
+sanitizeClauseContent : String -> String
+sanitizeClauseContent content =
+    String.trim content
+        |> stripClausePreface
+        |> capitalizeFirstLetter
+        |> stripTrailingJoinPhrase
+
+
+stripClausePreface : String -> String
+stripClausePreface clauseText =
+    let
+        replaceRegex =
+            Regex.caseInsensitive (Regex.regex "^(whereas|be it resolved|be it further resolved), ")
+    in
+        Regex.replace (Regex.AtMost 1) (replaceRegex) (\_ -> "") clauseText
+
+
+capitalizeFirstLetter : String -> String
+capitalizeFirstLetter string =
+    String.toUpper (String.slice 0 1 string) ++ String.dropLeft 1 string
+
+
+stripTrailingJoinPhrase : String -> String
+stripTrailingJoinPhrase clauseText =
+    let
+        joinPhrases =
+            [ "; and"
+            , "; now, therefore"
+            ]
+
+        joinPhraseRegexStr =
+            "(" ++ (String.join "|" joinPhrases) ++ ")$"
+
+        joinPhraseRegex =
+            Regex.caseInsensitive (Regex.regex joinPhraseRegexStr)
+    in
+        Regex.replace (Regex.AtMost 1) (joinPhraseRegex) (\_ -> "") clauseText
 
 
 dictKeysExist : List comparable -> Dict comparable Bool -> Bool
