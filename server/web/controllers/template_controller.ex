@@ -22,8 +22,7 @@ defmodule Resolutionizer.TemplateController do
   Parse a blob of text into structured clause data
   """
   def process_clauses(conn, _params) do
-    # TODO: use actual temp file library
-    tmp_file = "#{System.tmp_dir}/test"
+    {:ok, tmp_file} = Temp.path
 
     {:ok, body, conn} = Plug.Conn.read_body(conn)
 
