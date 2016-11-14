@@ -74,10 +74,12 @@ spec = do
   describe "clauseJoinPhraseParser" $
     forM_
       [ "; and"
+      , "; and "
       , "; now, therefore"
       , "; Now, therefore"
       , ";     now,     therefore"
       , "; now, therefore,"
+      , "; now, therefore, "
       ]
       (\phrase ->
           it ("handles '" ++ phrase ++ "'") $

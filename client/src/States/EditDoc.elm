@@ -16,6 +16,7 @@ module States.EditDoc
         )
 
 import Api.Doc
+import Api.Template.ProcessClauses
 import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
 import Dict exposing (Dict)
@@ -44,6 +45,7 @@ import Validate exposing (Validator)
 type Route
     = Meta
     | Clauses
+    | ClausesBulk
     | Preview
 
 
@@ -56,6 +58,8 @@ type alias State =
     , activeRoute : Route
     , urlPrefix : String
     , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
+    , bulkClauseInput : String
+    , bulkClauseRequest : RemoteData.WebData Api.Template.ProcessClauses.Response
     }
 
 
@@ -84,6 +88,9 @@ type Internal
     | RequestPdf
     | DoPreview
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
+    | UpdateBulkClauseInput String
+    | SubmitBulk
+    | BulkResponse (RemoteData.WebData Api.Template.ProcessClauses.Response)
 
 
 type Msg
@@ -168,6 +175,8 @@ init doc =
           , activeRoute = Meta
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
+          , bulkClauseInput = ""
+          , bulkClauseRequest = RemoteData.NotAsked
           }
         , Cmd.map (InMsg << dateSelectorTagger) dateSelectorCmd
         )
@@ -181,6 +190,9 @@ stateToUrl state =
 
         Clauses ->
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses")
+
+        ClausesBulk ->
+            Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses/bulk")
 
         Preview ->
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/preview")
@@ -198,6 +210,8 @@ locationToRoute urlPrefix location =
             Just Meta
         else if locationMatch "/clauses" then
             Just Clauses
+        else if locationMatch "/clauses/bulk" then
+            Just ClausesBulk
         else if locationMatch "/preview" then
             Just Preview
         else
@@ -331,10 +345,42 @@ update msg state =
             ( state, Cmd.map InMsg <| Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
 
         RequestPdf ->
-            ( state, Api.Doc.create (InMsg << PreviewResponse) state.doc )
+            ( { state | previewRequest = RemoteData.Loading }, Api.Doc.create (InMsg << PreviewResponse) state.doc )
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
+
+        UpdateBulkClauseInput content ->
+            { state | bulkClauseInput = content } ! []
+
+        SubmitBulk ->
+            ( { state | bulkClauseRequest = RemoteData.Loading }, Api.Template.ProcessClauses.cmd (InMsg << BulkResponse) state.bulkClauseInput )
+
+        BulkResponse data ->
+            let
+                newClauses =
+                    case data of
+                        RemoteData.Success clauses ->
+                            clauses
+
+                        _ ->
+                            []
+
+                ( newDoc, newUid ) =
+                    Doc.replaceClauses state.uid newClauses state.doc
+            in
+                case data of
+                    RemoteData.Success _ ->
+                        ( { state
+                            | uid = newUid
+                            , doc = newDoc
+                            , bulkClauseRequest = data
+                          }
+                        , Util.msgToCmd (InMsg <| SetActiveRoute Clauses)
+                        )
+
+                    _ ->
+                        { state | bulkClauseRequest = data } ! []
 
 
 doRoute : Route -> Maybe State -> ( State, Cmd Msg )
@@ -385,6 +431,25 @@ doInternalRouteChange route state =
                     Clauses ->
                         rejectRouteChange
 
+                    ClausesBulk ->
+                        allowRouteChange
+
+                    Preview ->
+                        allowIf validateClauses
+
+            ClausesBulk ->
+                -- You can go backwards to meta route safely or forward to the
+                -- preview route only if the data is valid
+                case route of
+                    Meta ->
+                        allowRouteChange
+
+                    Clauses ->
+                        allowRouteChange
+
+                    ClausesBulk ->
+                        rejectRouteChange
+
                     Preview ->
                         allowIf validateClauses
 
@@ -408,6 +473,9 @@ viewRoute state =
 
         Clauses ->
             viewClauseRoute state
+
+        ClausesBulk ->
+            viewClauseBulkRoute state
 
         Preview ->
             viewPreviewRoute state
@@ -435,11 +503,47 @@ viewClauseRoute state =
             , strong [] [ text "Be it further resolved" ]
             , text "."
             ]
+        , button [ class "usa-button", onClick (InMsg <| SetActiveRoute ClausesBulk) ] [ text "Bulk import" ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
         , lazy (viewNextButton validateClauses (InMsg <| DoPreview) "Preview") state.doc
         , viewBackButton
         ]
+
+
+viewClauseBulkRoute : State -> Html Msg
+viewClauseBulkRoute state =
+    viewClauseBulkRequest state
+
+
+viewClauseBulkRequest : State -> Html Msg
+viewClauseBulkRequest state =
+    let
+        viewInput msg =
+            div []
+                [ p [] [ text "Paste a block of text into the input below then click the submit button" ]
+                , p [] [ text msg ]
+                , textarea [ id "bulk-input", value state.bulkClauseInput, onInput (InMsg << UpdateBulkClauseInput), class "usa-width-five-sixths" ] []
+                , button [ class "usa-button", onClick (InMsg <| SubmitBulk) ] [ text "Submit" ]
+                ]
+    in
+        case state.bulkClauseRequest of
+            RemoteData.NotAsked ->
+                viewInput ""
+
+            RemoteData.Loading ->
+                text "Processing..."
+
+            RemoteData.Failure err ->
+                case err of
+                    Http.BadResponse _ errMsg ->
+                        viewInput errMsg
+
+                    _ ->
+                        viewInput "Having trouble."
+
+            RemoteData.Success _ ->
+                viewInput "Success!"
 
 
 viewPreviewRoute : State -> Html Msg
@@ -456,7 +560,7 @@ viewPreviewRequest request =
             text "Processing..."
 
         RemoteData.Loading ->
-            text "Loading..."
+            text "Processing..."
 
         RemoteData.Failure err ->
             text "Failed"

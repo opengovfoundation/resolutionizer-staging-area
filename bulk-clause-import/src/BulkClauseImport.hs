@@ -7,10 +7,11 @@ import           Data.Aeson             (ToJSON (..))
 import qualified Data.Aeson             as Aeson
 import           Data.Aeson.Types       (Options (fieldLabelModifier), camelTo2)
 import           Data.Either            (Either (..))
-import           Data.List              (stripPrefix)
+import           Data.Functor           (fmap)
+import           Data.List              (filter, lines, null, stripPrefix)
 import           Data.Maybe             (fromMaybe)
 import           GHC.Generics           (Generic)
-import           Prelude                (Eq, Show, String, show, ($), (.))
+import           Prelude                (Eq, Show, String, not, ($), (.))
 import           Text.Megaparsec
 import           Text.Megaparsec.String
 
@@ -60,16 +61,21 @@ clauseEndParser = try (clauseJoinPhraseParser *> nlOrEof) <|> nlOrEof
 
 
 clauseJoinPhraseParser :: Parser ()
-clauseJoinPhraseParser = char ';' *> space *> phraseParser *> optional (try $ space *> char ',') *> pure ()
+clauseJoinPhraseParser = char ';' *> space *> phraseParser *> optional (try $ (space *> char ',' *> pure ()) <|> space) *> pure ()
   where
     phraseParser = choice
       [ string' "and"
       , string' "now" *> space *> char ',' *> space *> string' "therefore"
       ]
 
+
 clausesParser :: Parser [Clause]
 clausesParser = sepEndBy clauseParser clauseEndParser
 
 
 parseClauses :: String -> Either String [Clause]
-parseClauses = Control.Arrow.left show . parse clausesParser ""
+parseClauses = Control.Arrow.left parseErrorPretty . parse clausesParser ""
+
+
+parseClausesPerClause :: String -> [Either String Clause]
+parseClausesPerClause = fmap (Control.Arrow.left parseErrorPretty . parse clauseParser "") . filter (not . null) . lines

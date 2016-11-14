@@ -1,10 +1,14 @@
 { mkDerivation, aeson, base, bytestring, hspec, hspec-megaparsec
 , megaparsec, stdenv
 }:
-mkDerivation {
+let
+  cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
+    (type == "directory" && baseName == "dist")
+  );
+in mkDerivation {
   pname = "resolutionizer-bulk-clause-import";
   version = "0.1.0.0";
-  src = ./.;
+  src = builtins.filterSource cleanSource ./.;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [ aeson base megaparsec ];

@@ -12,7 +12,7 @@ let
     # The `buildInputs` attrs of the derivations are empty at this point, but
     # the derivations needed are stored in the `nativeBuildInputs` attr, this is
     # a hack
-    nativeBuildInputs = builds.server.nativeBuildInputs ++ builds.client.nativeBuildInputs;
+    nativeBuildInputs = builds.server.nativeBuildInputs ++ builds.client.nativeBuildInputs ++ builds.bulk-clause-import.env.nativeBuildInputs;
   };
 in
   unifiedEnv
