@@ -116,7 +116,28 @@
 <body>
   <div class="sponsors">
     <p class="sponsors-content">
-      <%= Enum.join(@sponsors, ", ") %>
+    <%=
+      @sponsors
+      |> Enum.map(fn (sponsor) ->
+           Regex.run(~r/(.*), (.*) \((.*)\)/, sponsor, capture: :all_but_first)
+         end)
+      |> Enum.reduce(%{}, fn ([last, first, ward_or_office], grouped_sponsors) ->
+           case Regex.match?(~r/^\d+$/, ward_or_office) do
+             true -> Map.update(grouped_sponsors, "aldermen", ["#{first} #{last}"], fn (names) ->
+               ["#{first} #{last}" | names] end)
+             false -> Map.update(grouped_sponsors, String.downcase(ward_or_office), ["#{first} #{last}"], fn (names) ->
+               ["#{first} #{last}" | names] end)
+           end
+         end)
+      |> Enum.reduce([], fn ({group, names}, output) ->
+           case group do
+             "aldermen" -> ["Aldermen #{Enum.join(names, ", ")}" | output]
+             "mayor" -> ["Mayor #{Enum.join(names, ", ")}" | output]
+             "clerk" -> ["City Clerk #{Enum.join(names, ", ")}" | output]
+           end
+         end)
+      |> Enum.join(", ")
+    %>
     </p>
   </div>
   <div class="date">
