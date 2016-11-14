@@ -6,7 +6,11 @@ import Json.Decode.Pipeline as Decode
 import RemoteData
 
 
-type alias Response =
+type alias Request =
+    RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response ResponseData)
+
+
+type alias ResponseData =
     List ResponseClause
 
 
@@ -16,8 +20,8 @@ type alias ResponseClause =
     }
 
 
-responseDecoder : Decode.Decoder Response
-responseDecoder =
+responseDataDecoder : Decode.Decoder ResponseData
+responseDataDecoder =
     Decode.list responseClauseDecoder
 
 
@@ -31,11 +35,11 @@ responseClauseDecoder =
 {-| TODO: this should also take a Doc and validate that the clause types received
     are correct
 -}
-cmd : (RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response Response) -> msg) -> String -> Cmd msg
+cmd : (Request -> msg) -> String -> Cmd msg
 cmd msg content =
     HttpBuilder.post "/api/v1/templates/process_clauses"
         |> HttpBuilder.withStringBody content
         |> HttpBuilder.withHeader "Content-Type" "text/plain"
-        |> HttpBuilder.send (HttpBuilder.jsonReader responseDecoder) HttpBuilder.stringReader
+        |> HttpBuilder.send (HttpBuilder.jsonReader responseDataDecoder) HttpBuilder.stringReader
         |> RemoteData.asCmd
         |> Cmd.map msg

@@ -58,9 +58,9 @@ type alias State =
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
-    , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
+    , previewRequest : Api.Doc.CreateRequest
     , bulkClauseInput : String
-    , bulkClauseRequest : RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response Api.Template.ProcessClauses.Response)
+    , bulkClauseRequest : Api.Template.ProcessClauses.Request
     }
 
 
@@ -88,10 +88,10 @@ type Internal
     | NoOp
     | RequestPdf
     | DoPreview
-    | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
+    | PreviewResponse Api.Doc.CreateRequest
     | UpdateBulkClauseInput String
     | SubmitBulk
-    | BulkResponse (RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response Api.Template.ProcessClauses.Response))
+    | BulkResponse Api.Template.ProcessClauses.Request
 
 
 type Msg
@@ -368,7 +368,11 @@ update msg state =
                             []
 
                 ( newDoc, newUid ) =
-                    Doc.replaceClauses state.uid newClauses state.doc
+                    if List.isEmpty newClauses then
+                        -- If there are no clauses returned, don't do anything
+                        ( state.doc, state.uid )
+                    else
+                        Doc.replaceClauses state.uid newClauses state.doc
             in
                 case data of
                     RemoteData.Success _ ->
@@ -523,9 +527,15 @@ viewClauseBulkRequest state =
         viewInput msg =
             div []
                 [ p [] [ text "Paste a block of text into the input below then click the submit button" ]
-                , p [] [ text msg ]
-                , textarea [ id "bulk-input", value state.bulkClauseInput, onInput (InMsg << UpdateBulkClauseInput), class "usa-width-five-sixths" ] []
-                , button [ class "usa-button", onClick (InMsg <| SubmitBulk) ] [ text "Submit" ]
+                , if String.isEmpty msg then
+                    div [] []
+                  else
+                    pre [] [ text msg ]
+                , Html.form [ class "bulk-clause-import", onSubmit (InMsg <| SubmitBulk) ]
+                    [ textarea [ id "bulk-input", value state.bulkClauseInput, onInput (InMsg << UpdateBulkClauseInput) ] []
+                    , button [ type' "submit", class "usa-button pull-right" ] [ text "Submit" ]
+                    , viewBackButton
+                    ]
                 ]
     in
         case state.bulkClauseRequest of
@@ -554,7 +564,7 @@ viewPreviewRoute state =
         ]
 
 
-viewPreviewRequest : RemoteData.WebData Api.Doc.CreateResponse -> Html Msg
+viewPreviewRequest : Api.Doc.CreateRequest -> Html Msg
 viewPreviewRequest request =
     case request of
         RemoteData.NotAsked ->
@@ -733,6 +743,7 @@ viewBackButton =
     button
         [ class "pull-left usa-button usa-button-outline"
         , onClick (OutMsg HistoryBack)
+        , type' "button"
         ]
         [ text "Back" ]
 

@@ -11,7 +11,11 @@ import Json.Encode as Encode
 import RemoteData
 
 
-type alias Response =
+type alias Request =
+    RemoteData.WebData ResponseData
+
+
+type alias ResponseData =
     { id : Int
     , title : String
     , urls : ResponseUrls
@@ -24,9 +28,9 @@ type alias ResponseUrls =
     }
 
 
-responseDecoder : Decode.Decoder Response
-responseDecoder =
-    Decode.decode Response
+responseDataDecoder : Decode.Decoder ResponseData
+responseDataDecoder =
+    Decode.decode ResponseData
         |> Decode.required "id" Decode.int
         |> Decode.required "title" Decode.string
         |> Decode.required "urls" responseUrlsDecoder
@@ -39,9 +43,9 @@ responseUrlsDecoder =
         |> Decode.required "original" Decode.string
 
 
-cmd : (RemoteData.WebData Response -> msg) -> Doc.Model -> Cmd msg
+cmd : (Request -> msg) -> Doc.Model -> Cmd msg
 cmd msg doc =
-    Exts.Http.postJson (Decode.at [ "document" ] responseDecoder) "/api/v1/document" (Http.string <| encodeDocForRequest doc)
+    Exts.Http.postJson (Decode.at [ "document" ] responseDataDecoder) "/api/v1/document" (Http.string <| encodeDocForRequest doc)
         |> RemoteData.asCmd
         |> Cmd.map msg
 

@@ -34,6 +34,12 @@ spec = do
     it "includes non-trailing join phrases, if present" $
       parse clauseParser "" "WHEREAS, This is; and some content; and" `shouldParse` Clause { clauseType = Whereas, clauseContent = "This is; and some content" }
 
+    it "skips trailing spaces after clause join phrases, if present" $
+      parse clauseParser "" "WHEREAS, This is some content; and " `shouldParse` Clause { clauseType = Whereas, clauseContent = "This is some content" }
+
+    it "skips trailing spaces, if present" $
+      parse clauseParser "" "WHEREAS, This is some content " `shouldParse` Clause { clauseType = Whereas, clauseContent = "This is some content" }
+
 
   describe "clausesParser" $ do
     it "handles two clause types" $ do
@@ -70,11 +76,19 @@ spec = do
             ]
       parse clausesParser "" input `shouldParse` output
 
+    it "handles clause join phrases with trailing spaces" $ do
+      let input = "WHEREAS, This is some content; and \nWhereas, Some more stuff; Now, therefore  \nBe it resolved, This is more content."
+          output =
+            [ Clause { clauseType = Whereas, clauseContent = "This is some content" }
+            , Clause { clauseType = Whereas, clauseContent = "Some more stuff" }
+            , Clause { clauseType = BeItResolved, clauseContent = "This is more content." }
+            ]
+      parse clausesParser "" input `shouldParse` output
+
 
   describe "clauseJoinPhraseParser" $
     forM_
       [ "; and"
-      , "; and "
       , "; now, therefore"
       , "; Now, therefore"
       , ";     now,     therefore"

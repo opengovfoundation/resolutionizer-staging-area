@@ -219,3 +219,9 @@ img.document-preview-image {
 .pull-left {
     float: left;
 }
+
+.bulk-clause-import [type=submit] {
+    /* reset margins to normal button ones */
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}

@@ -55,13 +55,13 @@ clauseTypeParser = choice
 
 
 clauseEndParser :: Parser ()
-clauseEndParser = try (clauseJoinPhraseParser *> nlOrEof) <|> nlOrEof
+clauseEndParser = try (clauseJoinPhraseParser *> nlOrEof) <|> try nlOrEof
   where
-    nlOrEof = skipSome newline <|> eof
+    nlOrEof = skipMany (char ' ') *> (skipSome newline <|> eof)
 
 
 clauseJoinPhraseParser :: Parser ()
-clauseJoinPhraseParser = char ';' *> space *> phraseParser *> optional (try $ (space *> char ',' *> pure ()) <|> space) *> pure ()
+clauseJoinPhraseParser = char ';' *> space *> phraseParser *> optional (try $ space *> char ',' *> pure ()) *> pure ()
   where
     phraseParser = choice
       [ string' "and"
