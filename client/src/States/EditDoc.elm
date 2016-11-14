@@ -508,7 +508,11 @@ viewClauseRoute state =
             , strong [] [ text "Be it further resolved" ]
             , text "."
             ]
-        , button [ class "usa-button", onClick (InMsg <| SetActiveRoute ClausesBulk) ] [ text "Bulk import" ]
+        , p []
+            [ text "You may also "
+            , button [ class "usa-button usa-button-plain button-link", onClick (InMsg <| SetActiveRoute ClausesBulk) ] [ text "bulk import clauses" ]
+            , text "."
+            ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
         , lazy (viewNextButton validateClauses (InMsg <| DoPreview) "Preview") state.doc
@@ -526,7 +530,7 @@ viewClauseBulkRequest state =
     let
         viewInput msg =
             div []
-                [ p [] [ text "Paste a block of text into the input below then click the submit button" ]
+                [ p [] [ text "Paste a block of clauses into the input below then click the submit button." ]
                 , if String.isEmpty msg then
                     div [] []
                   else

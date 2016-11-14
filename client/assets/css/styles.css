@@ -225,3 +225,16 @@ img.document-preview-image {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
+
+.button-link,
+.button-link:focus,
+.button-link:hover {
+    color: black;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.button-link:focus,
+.button-link:hover {
+    color: gray;
+}
