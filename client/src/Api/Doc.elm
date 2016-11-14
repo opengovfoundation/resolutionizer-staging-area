@@ -2,7 +2,7 @@ module Api.Doc exposing (CreateResponse, create)
 
 import Api.Doc.Create
 import Doc
-import Exts.RemoteData as RemoteData
+import RemoteData
 
 
 type alias CreateResponse =

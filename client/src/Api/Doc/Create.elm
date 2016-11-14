@@ -4,11 +4,11 @@ import Dict exposing (Dict)
 import Doc
 import Exts.Date
 import Exts.Http
-import Exts.RemoteData as RemoteData
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
+import RemoteData
 
 
 type alias Response =

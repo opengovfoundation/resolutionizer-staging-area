@@ -25,16 +25,17 @@ import Dom
 import Exts.Dict
 import Exts.Html.Events
 import Exts.Maybe
-import Exts.RemoteData as RemoteData
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
 import Http
+import HttpBuilder
 import Inputs.DateSelector
 import Json.Decode as Decode
 import Navigation exposing (Location)
+import RemoteData
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
 import Task
@@ -59,7 +60,7 @@ type alias State =
     , urlPrefix : String
     , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
     , bulkClauseInput : String
-    , bulkClauseRequest : RemoteData.WebData Api.Template.ProcessClauses.Response
+    , bulkClauseRequest : RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response Api.Template.ProcessClauses.Response)
     }
 
 
@@ -90,7 +91,7 @@ type Internal
     | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
     | UpdateBulkClauseInput String
     | SubmitBulk
-    | BulkResponse (RemoteData.WebData Api.Template.ProcessClauses.Response)
+    | BulkResponse (RemoteData.RemoteData (HttpBuilder.Error String) (HttpBuilder.Response Api.Template.ProcessClauses.Response))
 
 
 type Msg
@@ -360,8 +361,8 @@ update msg state =
             let
                 newClauses =
                     case data of
-                        RemoteData.Success clauses ->
-                            clauses
+                        RemoteData.Success resp ->
+                            resp.data
 
                         _ ->
                             []
@@ -536,8 +537,8 @@ viewClauseBulkRequest state =
 
             RemoteData.Failure err ->
                 case err of
-                    Http.BadResponse _ errMsg ->
-                        viewInput errMsg
+                    HttpBuilder.BadResponse resp ->
+                        viewInput resp.data
 
                     _ ->
                         viewInput "Having trouble."
