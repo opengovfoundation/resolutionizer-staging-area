@@ -1,13 +1,13 @@
 name:                resolutionizer-bulk-clause-import
 version:             0.1.0.0
--- synopsis:            
--- description:         
+-- synopsis:
+-- description:
 license:             AGPL-3
 license-file:        LICENSE
 author:              Tanner Doshier
 maintainer:          git@doshitan.com
--- copyright:           
--- category:            
+-- copyright:
+-- category:
 build-type:          Simple
 -- extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
