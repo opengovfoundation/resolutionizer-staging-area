@@ -145,6 +145,7 @@ init doc =
                     | defaultTo =
                         Inputs.DateSelector.Run lastMeetingDateTask
                     , inputName = "meeting-date"
+                    , minDate = Date.add Year -1
                     , maxDate = Date.add Year 1
                 }
 
