@@ -143,9 +143,7 @@
   <div class="main">
     <%= for %{ "type" => type, "content" => content } <- @clauses do %>
       <p class="clause-group">
-        <span class="clause"><%= type %></span>, <%= content %>
-        <span class="join-and">; and</span>
-        <span class="join-therefore">; now, therefore</span>
+        <span class="clause"><%= type %></span>, <%= content %><span class="join-and">; and</span><span class="join-therefore">; now, therefore</span>
       </p>
     <% end %>
   </div>
