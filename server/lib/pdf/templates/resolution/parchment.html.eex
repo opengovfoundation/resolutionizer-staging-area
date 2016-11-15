@@ -117,7 +117,7 @@
   <div class="sponsors">
     <p class="sponsors-content">
     <%=
-      @sponsors
+      grouped_sponsors = @sponsors
       |> Enum.map(fn (sponsor) ->
            Regex.run(~r/(.*), (.*) \((.*)\)/, sponsor, capture: :all_but_first)
          end)
@@ -130,6 +130,8 @@
            end
          end)
       |> Enum.sort_by(fn ({group, _names}) -> group end)
+
+      grouped_text = grouped_sponsors
       |> Enum.reduce([], fn ({group, names}, output) ->
            name_count = Enum.count(names)
 
@@ -140,7 +142,7 @@
              "clerk" -> "City Clerk"
            end
 
-           case name_count > 1 do
+           case name_count > 1 && Enum.count(grouped_sponsors) == 1 do
              true ->
                last_name = List.last(names)
 
@@ -155,7 +157,12 @@
                output ++ ["#{prefix} #{names}"]
            end
          end)
-      |> (&("#{Enum.slice(&1, 0..1) |> Enum.join(", ")} and #{List.last(&1)}")).()
+
+       case Enum.count(grouped_text) do
+         1 -> List.first(grouped_text)
+         2 -> "#{List.first(grouped_text)} and #{List.last(grouped_text)}"
+         _ -> "#{Enum.slice(grouped_text, 0..1) |> Enum.join(", ")} and #{List.last(grouped_text)}"
+       end
     %>
     </p>
   </div>
