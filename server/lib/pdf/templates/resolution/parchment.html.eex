@@ -129,14 +129,33 @@
                ["#{first} #{last}" | names] end)
            end
          end)
+      |> Enum.sort_by(fn ({group, _names}) -> group end)
       |> Enum.reduce([], fn ({group, names}, output) ->
-           case group do
-             "aldermen" -> ["Aldermen #{Enum.join(names, ", ")}" | output]
-             "mayor" -> ["Mayor #{Enum.join(names, ", ")}" | output]
-             "clerk" -> ["City Clerk #{Enum.join(names, ", ")}" | output]
+           name_count = Enum.count(names)
+
+           prefix = case group do
+             "aldermen" when name_count == 1 -> "Alderman"
+             "aldermen" when name_count > 1 -> "Aldermen"
+             "mayor" -> "Mayor"
+             "clerk" -> "City Clerk"
+           end
+
+           case name_count > 1 do
+             true ->
+               last_name = List.last(names)
+
+               rest_of_names = names
+               |> List.delete_at(-1)
+               |> Enum.join(", ")
+
+               formatted_names = "#{rest_of_names} and #{last_name}"
+
+               output ++ ["#{prefix} #{formatted_names}"]
+             false ->
+               output ++ ["#{prefix} #{names}"]
            end
          end)
-      |> Enum.join(", ")
+      |> (&("#{Enum.slice(&1, 0..1) |> Enum.join(", ")} and #{List.last(&1)}")).()
     %>
     </p>
   </div>
