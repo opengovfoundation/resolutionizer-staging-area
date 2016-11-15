@@ -3,6 +3,8 @@
 , domainName
 , awsAccessKeyId
 , awsSecretAccessKey
+, legistarClient ? ""
+, legistarKey ? ""
 , ...
 }:
 
@@ -22,7 +24,8 @@
 
           resolutionizer = {
             inherit dbPass domainName serverPackage clientPackage s3BucketName
-            awsRegion awsAccessKeyId awsSecretAccessKey;
+            awsRegion awsAccessKeyId awsSecretAccessKey legistarClient
+            legistarKey;
             enableSSL = false;
           };
 

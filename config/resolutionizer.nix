@@ -122,6 +122,20 @@ in {
         Automatically grab SSL certs with letsencrypt and force TLS usage
       '';
     };
+
+    legistarClient = mkOption {
+      type = types.string;
+      description = ''
+        The client name for Legistar API
+      '';
+    };
+
+    legistarKey = mkOption {
+      type = types.string;
+      description = ''
+        The API key for write access to the Legistar API
+      '';
+    };
   };
 
   config = {
@@ -139,6 +153,8 @@ in {
       AWS_REGION=${cfg.awsRegion}
       ${optionalString (cfg.awsAccessKeyId != null) "AWS_ACCESS_KEY_ID=${cfg.awsAccessKeyId}"}
       ${optionalString (cfg.awsSecretAccessKey != null) "AWS_SECRET_ACCESS_KEY=${cfg.awsSecretAccessKey}"}
+      LEGISTAR_CLIENT=${cfg.legistarClient}
+      LEGISTAR_KEY=${cfg.legistarKey}
     '';
 
     environment.systemPackages = [ cfg.serverPackage pkgs.postgresql pkgs.wkhtmltopdf ];

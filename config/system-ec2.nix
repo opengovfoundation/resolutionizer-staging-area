@@ -7,6 +7,8 @@
 , phoenixPort ? 4000
 , domainName
 , s3BucketName
+, legistarClient ? ""
+, legistarKey ? ""
 , ...
 }:
 
@@ -28,7 +30,9 @@ in {
           imports = [ ./resolutionizer.nix ];
 
           resolutionizer = {
-            inherit dbUser dbPass dbName dbPort phoenixPort domainName serverPackage clientPackage dbHost s3BucketName;
+            inherit dbUser dbPass dbName dbPort phoenixPort domainName
+            serverPackage clientPackage dbHost s3BucketName legistarClient
+            legistarKey;
             awsRegion = region;
           };
 
