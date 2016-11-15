@@ -84,6 +84,23 @@
     font-weight: bold;
   }
 
+  .main .clause-group .join-therefore {
+    display: none;
+  }
+
+  <%
+    first_resolved_index = Enum.find_index(@clauses, fn(c) -> String.downcase(c["type"]) == "be it resolved" end)
+  %>
+
+  .main .clause-group:nth-child(<%= first_resolved_index %>) .join-and,
+  .main .clause-group:last-child .join-and {
+    display: none;
+  }
+
+  .main .clause-group:nth-child(<%= first_resolved_index %>) .join-therefore {
+    display: inline;
+  }
+
 
   /**
    * Signatures
@@ -125,8 +142,8 @@
 
   <div class="main">
     <%= for %{ "type" => type, "content" => content } <- @clauses do %>
-      <p>
-        <span class="clause"><%= type %></span>, <%= content %>
+      <p class="clause-group">
+        <span class="clause"><%= type %></span>, <%= content %><span class="join-and">; and</span><span class="join-therefore">; now, therefore</span>
       </p>
     <% end %>
   </div>
