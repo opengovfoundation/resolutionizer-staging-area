@@ -21,7 +21,8 @@ defmodule Resolutionizer.Mixfile do
     [mod: {Resolutionizer, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
                     :phoenix_ecto, :postgrex, :timex, :ex_machina, :ex_aws,
-                    :poison, :arc, :arc_ecto, :hackney, :sweet_xml, :gen_stage]]
+                    :poison, :arc, :arc_ecto, :hackney, :sweet_xml, :gen_stage,
+                    :temp]]
   end
 
   # Specifies which paths to compile per environment.
@@ -49,7 +50,8 @@ defmodule Resolutionizer.Mixfile do
      {:hackney, "~> 1.5"},
      {:poison, "~> 2.0"},
      {:sweet_xml, "~> 0.5"},
-     {:mock, "~> 0.1.1", only: :test}]
+     {:mock, "~> 0.1.1", only: :test},
+     {:temp, "~> 0.4.1"}]
   end
 
   # Aliases are shortcuts or tasks specific to the current project.

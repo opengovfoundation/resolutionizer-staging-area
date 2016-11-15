@@ -1,9 +1,8 @@
 { gawk, elixir, erlang, makeWrapper, stdenv, which, wkhtmltopdf, imagemagickBig,
-  ghostscript, glibcLocales, pdftk
+  ghostscript, glibcLocales, pdftk, bulk-clause-import
 }:
 let
   cleanSource = name: type: let baseName = baseNameOf (toString name); in ! (
-    (type == "directory" && baseName == ".git") ||
     (type == "directory" && baseName == "_build") ||
     (type == "directory" && baseName == "static")
   );
@@ -12,7 +11,7 @@ in stdenv.mkDerivation rec {
   version = "0.1.0.0";
   src = builtins.filterSource cleanSource ./.;
   buildInputs = [
-    elixir makeWrapper wkhtmltopdf pdftk imagemagickBig ghostscript
+    elixir makeWrapper wkhtmltopdf pdftk imagemagickBig ghostscript bulk-clause-import
   ];
 
   # Need this to support the locale stuff
@@ -38,7 +37,7 @@ in stdenv.mkDerivation rec {
 
     mv $out/bin/resolutionizer $out/bin/resolutionizer-unwrapped
     makeWrapper $out/bin/resolutionizer-unwrapped $out/bin/resolutionizer \
-      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf pdftk erlang imagemagickBig ghostscript ]}:$PATH'
+      --set PATH '${stdenv.lib.makeBinPath [ wkhtmltopdf pdftk erlang imagemagickBig ghostscript bulk-clause-import ]}:$PATH'
 
     sed -i -e "s|awk|${gawk}/bin/awk|" $out/releases/0.0.1/resolutionizer.sh
     sed -i -e "s|which|${which}/bin/which|" $out/releases/0.0.1/resolutionizer.sh

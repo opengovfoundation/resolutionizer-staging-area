@@ -1,14 +1,13 @@
-module Api.Doc exposing (CreateResponse, create)
+module Api.Doc exposing (CreateRequest, create)
 
 import Api.Doc.Create
 import Doc
-import Exts.RemoteData as RemoteData
 
 
-type alias CreateResponse =
-    Api.Doc.Create.Response
+type alias CreateRequest =
+    Api.Doc.Create.Request
 
 
-create : (RemoteData.WebData CreateResponse -> msg) -> Doc.Model -> Cmd msg
+create : (CreateRequest -> msg) -> Doc.Model -> Cmd msg
 create =
     Api.Doc.Create.cmd

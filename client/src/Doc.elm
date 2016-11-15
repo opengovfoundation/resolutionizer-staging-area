@@ -114,6 +114,18 @@ addNewClause id clauseType content doc =
         ( newDoc, finalNewClause )
 
 
+replaceClauses : Int -> List { ctype : String, content : String } -> Model -> ( Model, Int )
+replaceClauses startingId newClauses doc =
+    let
+        clauselessDoc =
+            { doc | clauses = Dict.empty }
+
+        ( newDoc, newUid ) =
+            List.foldl (\clause ( doc, uid ) -> ( fst <| addNewClause uid clause.ctype clause.content doc, uid + 1 )) ( clauselessDoc, startingId ) newClauses
+    in
+        ( newDoc, newUid )
+
+
 newClause : Int -> Int -> ClauseType -> String -> Clause
 newClause id pos ctype content =
     { ctype = ctype

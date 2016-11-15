@@ -16,6 +16,7 @@ module States.EditDoc
         )
 
 import Api.Doc
+import Api.Template.ProcessClauses
 import Date exposing (Date)
 import Date.Extra as Date exposing (Interval(..))
 import Dict exposing (Dict)
@@ -24,16 +25,17 @@ import Dom
 import Exts.Dict
 import Exts.Html.Events
 import Exts.Maybe
-import Exts.RemoteData as RemoteData
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Lazy exposing (lazy, lazy2)
 import Http
+import HttpBuilder
 import Inputs.DateSelector
 import Json.Decode as Decode
 import Navigation exposing (Location)
+import RemoteData
 import RouteUrl exposing (HistoryEntry(..), UrlChange)
 import String
 import Task
@@ -44,6 +46,7 @@ import Validate exposing (Validator)
 type Route
     = Meta
     | Clauses
+    | ClausesBulk
     | Preview
 
 
@@ -55,7 +58,9 @@ type alias State =
     , uid : Int
     , activeRoute : Route
     , urlPrefix : String
-    , previewRequest : RemoteData.WebData Api.Doc.CreateResponse
+    , previewRequest : Api.Doc.CreateRequest
+    , bulkClauseInput : String
+    , bulkClauseRequest : Api.Template.ProcessClauses.Request
     }
 
 
@@ -83,7 +88,10 @@ type Internal
     | NoOp
     | RequestPdf
     | DoPreview
-    | PreviewResponse (RemoteData.WebData Api.Doc.CreateResponse)
+    | PreviewResponse Api.Doc.CreateRequest
+    | UpdateBulkClauseInput String
+    | SubmitBulk
+    | BulkResponse Api.Template.ProcessClauses.Request
 
 
 type Msg
@@ -169,6 +177,8 @@ init doc =
           , activeRoute = Meta
           , urlPrefix = "/new"
           , previewRequest = RemoteData.NotAsked
+          , bulkClauseInput = ""
+          , bulkClauseRequest = RemoteData.NotAsked
           }
         , Cmd.map (InMsg << dateSelectorTagger) dateSelectorCmd
         )
@@ -182,6 +192,9 @@ stateToUrl state =
 
         Clauses ->
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses")
+
+        ClausesBulk ->
+            Just <| UrlChange NewEntry (state.urlPrefix ++ "/clauses/bulk")
 
         Preview ->
             Just <| UrlChange NewEntry (state.urlPrefix ++ "/preview")
@@ -199,6 +212,8 @@ locationToRoute urlPrefix location =
             Just Meta
         else if locationMatch "/clauses" then
             Just Clauses
+        else if locationMatch "/clauses/bulk" then
+            Just ClausesBulk
         else if locationMatch "/preview" then
             Just Preview
         else
@@ -332,10 +347,46 @@ update msg state =
             ( state, Cmd.map InMsg <| Cmd.batch <| List.map Util.msgToCmd [ SetActiveRoute Preview, RequestPdf ] )
 
         RequestPdf ->
-            ( state, Api.Doc.create (InMsg << PreviewResponse) state.doc )
+            ( { state | previewRequest = RemoteData.Loading }, Api.Doc.create (InMsg << PreviewResponse) state.doc )
 
         PreviewResponse data ->
             { state | previewRequest = data } ! []
+
+        UpdateBulkClauseInput content ->
+            { state | bulkClauseInput = content } ! []
+
+        SubmitBulk ->
+            ( { state | bulkClauseRequest = RemoteData.Loading }, Api.Template.ProcessClauses.cmd (InMsg << BulkResponse) state.bulkClauseInput )
+
+        BulkResponse data ->
+            let
+                newClauses =
+                    case data of
+                        RemoteData.Success resp ->
+                            resp.data
+
+                        _ ->
+                            []
+
+                ( newDoc, newUid ) =
+                    if List.isEmpty newClauses then
+                        -- If there are no clauses returned, don't do anything
+                        ( state.doc, state.uid )
+                    else
+                        Doc.replaceClauses state.uid newClauses state.doc
+            in
+                case data of
+                    RemoteData.Success _ ->
+                        ( { state
+                            | uid = newUid
+                            , doc = newDoc
+                            , bulkClauseRequest = data
+                          }
+                        , Util.msgToCmd (InMsg <| SetActiveRoute Clauses)
+                        )
+
+                    _ ->
+                        { state | bulkClauseRequest = data } ! []
 
 
 doRoute : Route -> Maybe State -> ( State, Cmd Msg )
@@ -386,6 +437,25 @@ doInternalRouteChange route state =
                     Clauses ->
                         rejectRouteChange
 
+                    ClausesBulk ->
+                        allowRouteChange
+
+                    Preview ->
+                        allowIf validateClauses
+
+            ClausesBulk ->
+                -- You can go backwards to meta route safely or forward to the
+                -- preview route only if the data is valid
+                case route of
+                    Meta ->
+                        allowRouteChange
+
+                    Clauses ->
+                        allowRouteChange
+
+                    ClausesBulk ->
+                        rejectRouteChange
+
                     Preview ->
                         allowIf validateClauses
 
@@ -409,6 +479,9 @@ viewRoute state =
 
         Clauses ->
             viewClauseRoute state
+
+        ClausesBulk ->
+            viewClauseBulkRoute state
 
         Preview ->
             viewPreviewRoute state
@@ -436,11 +509,57 @@ viewClauseRoute state =
             , strong [] [ text "Be it further resolved" ]
             , text "."
             ]
+        , p []
+            [ text "You may also "
+            , button [ class "usa-button usa-button-plain button-link", onClick (InMsg <| SetActiveRoute ClausesBulk) ] [ text "bulk import clauses" ]
+            , text "."
+            ]
         , lazy viewClauses state.doc
         , lazy2 viewClauseTypeSelector state.doc state.selectedNewClauseType
         , lazy (viewNextButton validateClauses (InMsg <| DoPreview) "Preview") state.doc
         , viewBackButton
         ]
+
+
+viewClauseBulkRoute : State -> Html Msg
+viewClauseBulkRoute state =
+    viewClauseBulkRequest state
+
+
+viewClauseBulkRequest : State -> Html Msg
+viewClauseBulkRequest state =
+    let
+        viewInput msg =
+            div []
+                [ p [] [ text "Paste a block of clauses into the input below then click the submit button." ]
+                , if String.isEmpty msg then
+                    div [] []
+                  else
+                    pre [] [ text msg ]
+                , Html.form [ class "bulk-clause-import", onSubmit (InMsg <| SubmitBulk) ]
+                    [ textarea [ id "bulk-input", value state.bulkClauseInput, onInput (InMsg << UpdateBulkClauseInput) ] []
+                    , button [ type' "submit", class "usa-button pull-right" ] [ text "Submit" ]
+                    , viewBackButton
+                    ]
+                ]
+    in
+        case state.bulkClauseRequest of
+            RemoteData.NotAsked ->
+                viewInput ""
+
+            RemoteData.Loading ->
+                text "Processing..."
+
+            RemoteData.Failure err ->
+                case err of
+                    HttpBuilder.BadResponse resp ->
+                        viewInput resp.data
+
+                    _ ->
+                        viewInput "Having trouble."
+
+            RemoteData.Success _ ->
+                viewInput "Success!"
 
 
 viewPreviewRoute : State -> Html Msg
@@ -450,14 +569,14 @@ viewPreviewRoute state =
         ]
 
 
-viewPreviewRequest : RemoteData.WebData Api.Doc.CreateResponse -> Html Msg
+viewPreviewRequest : Api.Doc.CreateRequest -> Html Msg
 viewPreviewRequest request =
     case request of
         RemoteData.NotAsked ->
             text "Processing..."
 
         RemoteData.Loading ->
-            text "Loading..."
+            text "Processing..."
 
         RemoteData.Failure err ->
             text "Failed"
@@ -629,6 +748,7 @@ viewBackButton =
     button
         [ class "pull-left usa-button usa-button-outline"
         , onClick (OutMsg HistoryBack)
+        , type' "button"
         ]
         [ text "Back" ]
 

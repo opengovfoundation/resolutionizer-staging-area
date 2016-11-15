@@ -114,6 +114,7 @@ view state =
                 , button
                     [ classList
                         [ ( "usa-button-disabled", state.username == "" || state.password == "" ) ]
+                    , type' "submit"
                     ]
                     [ text "Login" ]
                 ]
