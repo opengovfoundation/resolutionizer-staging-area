@@ -4,15 +4,19 @@ import Dict exposing (Dict)
 import Doc
 import Exts.Date
 import Exts.Http
-import Exts.RemoteData as RemoteData
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
-import Regex
+import RemoteData
+import String
 
 
-type alias Response =
+type alias Request =
+    RemoteData.WebData ResponseData
+
+
+type alias ResponseData =
     { id : Int
     , title : String
     , urls : ResponseUrls
@@ -25,9 +29,9 @@ type alias ResponseUrls =
     }
 
 
-responseDecoder : Decode.Decoder Response
-responseDecoder =
-    Decode.decode Response
+responseDataDecoder : Decode.Decoder ResponseData
+responseDataDecoder =
+    Decode.decode ResponseData
         |> Decode.required "id" Decode.int
         |> Decode.required "title" Decode.string
         |> Decode.required "urls" responseUrlsDecoder
@@ -40,9 +44,9 @@ responseUrlsDecoder =
         |> Decode.required "original" Decode.string
 
 
-cmd : (RemoteData.WebData Response -> msg) -> Doc.Model -> Cmd msg
+cmd : (Request -> msg) -> Doc.Model -> Cmd msg
 cmd msg doc =
-    Exts.Http.postJson (Decode.at [ "document" ] responseDecoder) "/api/v1/document" (Http.string <| encodeDocForRequest doc)
+    Exts.Http.postJson (Decode.at [ "document" ] responseDataDecoder) "/api/v1/document" (Http.string <| encodeDocForRequest doc)
         |> RemoteData.asCmd
         |> Cmd.map msg
 
@@ -81,48 +85,5 @@ encodeDocClause : Doc.Model -> Doc.Clause -> Encode.Value
 encodeDocClause doc clause =
     Encode.object
         [ ( "type", Encode.string <| Doc.getDisplayNameForClauseType doc clause.ctype )
-        , ( "content", Encode.string (sanitizeClauseContent doc clause.content) )
+        , ( "content", Encode.string clause.content )
         ]
-
-
-sanitizeClauseContent : Doc.Model -> String -> String
-sanitizeClauseContent doc content =
-    content
-        |> String.trim
-        |> stripClausePreface doc
-        |> capitalizeFirstLetter
-        |> stripTrailingJoinPhrase
-
-
-stripClausePreface : Doc.Model -> String -> String
-stripClausePreface doc clauseText =
-    let
-        replaceRegexStr =
-            "^(" ++ (String.join "|" <| List.map .displayName <| Dict.values doc.validClauseTypes) ++ "), "
-
-        replaceRegex =
-            Regex.caseInsensitive (Regex.regex replaceRegexStr)
-    in
-        Regex.replace (Regex.AtMost 1) replaceRegex (\_ -> "") clauseText
-
-
-capitalizeFirstLetter : String -> String
-capitalizeFirstLetter string =
-    String.toUpper (String.slice 0 1 string) ++ String.dropLeft 1 string
-
-
-stripTrailingJoinPhrase : String -> String
-stripTrailingJoinPhrase clauseText =
-    let
-        joinPhrases =
-            [ "; and"
-            , "; now, therefore"
-            ]
-
-        joinPhraseRegexStr =
-            "(" ++ (String.join "|" joinPhrases) ++ ")$"
-
-        joinPhraseRegex =
-            Regex.caseInsensitive (Regex.regex joinPhraseRegexStr)
-    in
-        Regex.replace (Regex.AtMost 1) joinPhraseRegex (\_ -> "") clauseText
