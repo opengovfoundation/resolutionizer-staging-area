@@ -40,6 +40,9 @@ spec = do
     it "skips trailing spaces, if present" $
       parse clauseParser "" "WHEREAS, This is some content " `shouldParse` Clause { clauseType = Whereas, clauseContent = "This is some content" }
 
+    it "skips leading spaces, if present" $
+      parse clauseParser "" "   WHEREAS, This is some content" `shouldParse` Clause { clauseType = Whereas, clauseContent = "This is some content" }
+
 
   describe "clausesParser" $ do
     it "handles two clause types" $ do

@@ -42,7 +42,7 @@ instance ToJSON Clause where
 
 clauseParser :: Parser Clause
 clauseParser = Clause
-  <$> clauseTypeParser
+  <$> (space *> clauseTypeParser)
   <*> (space *> string "," *> space *> someTill anyChar (lookAhead clauseEndParser))
 
 
