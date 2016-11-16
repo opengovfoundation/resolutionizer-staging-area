@@ -586,6 +586,10 @@ viewPreviewRequest request =
                 [ img [ class "document-preview-image img-responsive", src urls.preview ] []
                 , viewBackButton
                 , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]
+                , span [ class "gray" ]
+                    [ strong [] [ text "Note: " ]
+                    , text "This download link expires after 5 minutes."
+                    ]
                 ]
 
 

@@ -238,3 +238,7 @@ img.document-preview-image {
 .button-link:hover {
     color: gray;
 }
+
+.gray {
+    color: gray;
+}
