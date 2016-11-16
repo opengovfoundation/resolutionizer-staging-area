@@ -133,7 +133,53 @@
 <body>
   <div class="sponsors">
     <p class="sponsors-content">
-      <%= Enum.join(@sponsors, ", ") %>
+    <%=
+      grouped_sponsors = @sponsors
+      |> Enum.map(fn (sponsor) ->
+           Regex.run(~r/(.*), (.*) \((.*)\)/, sponsor, capture: :all_but_first)
+         end)
+      |> Enum.reduce(%{}, fn ([last, first, ward_or_office], grouped_sponsors) ->
+           case Regex.match?(~r/^\d+$/, ward_or_office) do
+             true -> Map.update(grouped_sponsors, "aldermen", ["#{first} #{last}"], fn (names) ->
+               ["#{first} #{last}" | names] end)
+             false -> Map.update(grouped_sponsors, String.downcase(ward_or_office), ["#{first} #{last}"], fn (names) ->
+               ["#{first} #{last}" | names] end)
+           end
+         end)
+      |> Enum.sort_by(fn ({group, _names}) -> group end)
+
+      grouped_text = grouped_sponsors
+      |> Enum.reduce([], fn ({group, names}, output) ->
+           name_count = Enum.count(names)
+
+           prefix = case group do
+             "aldermen" when name_count == 1 -> "Alderman"
+             "aldermen" when name_count > 1 -> "Aldermen"
+             "mayor" -> "Mayor"
+             "clerk" -> "City Clerk"
+           end
+
+           case name_count > 1 && Enum.count(grouped_sponsors) == 1 do
+             true ->
+               last_name = List.last(names)
+
+               rest_of_names = names
+               |> List.delete_at(-1)
+               |> Enum.join(", ")
+
+               formatted_names = "#{rest_of_names} and #{last_name}"
+
+               output ++ ["#{prefix} #{formatted_names}"]
+             false ->
+               output ++ ["#{prefix} #{Enum.join(names, ", ")}"]
+           end
+         end)
+
+       case Enum.count(grouped_text) do
+         1 -> List.first(grouped_text)
+         _ -> "#{grouped_text |> List.delete_at(-1) |> Enum.join(", ")} and #{List.last(grouped_text)}"
+       end
+    %>
     </p>
   </div>
   <div class="date">
