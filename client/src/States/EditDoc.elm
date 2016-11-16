@@ -61,6 +61,7 @@ type alias State =
     , previewRequest : Api.Doc.CreateRequest
     , bulkClauseInput : String
     , bulkClauseRequest : Api.Template.ProcessClauses.Request
+    , previewZoom : Bool
     }
 
 
@@ -92,6 +93,7 @@ type Internal
     | UpdateBulkClauseInput String
     | SubmitBulk
     | BulkResponse Api.Template.ProcessClauses.Request
+    | TogglePreviewZoom
 
 
 type Msg
@@ -179,6 +181,7 @@ init doc =
           , previewRequest = RemoteData.NotAsked
           , bulkClauseInput = ""
           , bulkClauseRequest = RemoteData.NotAsked
+          , previewZoom = False
           }
         , Cmd.map (InMsg << dateSelectorTagger) dateSelectorCmd
         )
@@ -388,6 +391,9 @@ update msg state =
                     _ ->
                         { state | bulkClauseRequest = data } ! []
 
+        TogglePreviewZoom ->
+            ( { state | previewZoom = not state.previewZoom }, Cmd.none )
+
 
 doRoute : Route -> Maybe State -> ( State, Cmd Msg )
 doRoute route mState =
@@ -565,13 +571,13 @@ viewClauseBulkRequest state =
 viewPreviewRoute : State -> Html Msg
 viewPreviewRoute state =
     div []
-        [ viewPreviewRequest state.previewRequest
+        [ viewPreviewRequest state
         ]
 
 
-viewPreviewRequest : Api.Doc.CreateRequest -> Html Msg
-viewPreviewRequest request =
-    case request of
+viewPreviewRequest : State -> Html Msg
+viewPreviewRequest state =
+    case state.previewRequest of
         RemoteData.NotAsked ->
             text "Processing..."
 
@@ -584,7 +590,15 @@ viewPreviewRequest request =
         RemoteData.Success { id, urls } ->
             div [ class "document-preview-container" ]
                 [ div [ class "document-preview-image-wrapper" ]
-                    [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+                    [ img
+                        [ classList
+                            [ ( "document-preview-image img-responsive", True )
+                            , ( "zoom", state.previewZoom )
+                            ]
+                        , src urls.preview
+                        , onClick (InMsg <| TogglePreviewZoom)
+                        ]
+                        []
                     ]
                 , viewBackButton
                 , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]

@@ -207,7 +207,7 @@ img.document-preview-image {
     border: 1px solid #ccc;
 }
 
-img.document-preview-image:hover {
+img.document-preview-image.zoom {
     max-height: 100%;
     -moz-transfrom: scale(2);
     -ms-transfrom: scale(2);
