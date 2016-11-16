@@ -154,14 +154,13 @@
 
                output ++ ["#{prefix} #{formatted_names}"]
              false ->
-               output ++ ["#{prefix} #{names}"]
+               output ++ ["#{prefix} #{Enum.join(names, ", ")}"]
            end
          end)
 
        case Enum.count(grouped_text) do
          1 -> List.first(grouped_text)
-         2 -> "#{List.first(grouped_text)} and #{List.last(grouped_text)}"
-         _ -> "#{Enum.slice(grouped_text, 0..1) |> Enum.join(", ")} and #{List.last(grouped_text)}"
+         _ -> "#{grouped_text |> List.delete_at(-1) |> Enum.join(", ")} and #{List.last(grouped_text)}"
        end
     %>
     </p>
