@@ -8,8 +8,8 @@ import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
-import RemoteData
 import Regex
+import RemoteData
 import String
 
 
@@ -78,7 +78,13 @@ encodeDocData doc =
     Encode.object
         [ ( "sponsors", Encode.list <| List.map (Encode.string << .name) <| List.sortBy .pos <| Dict.values doc.sponsors )
         , ( "meeting_date", Encode.string <| Maybe.withDefault "1970-01-01" <| Maybe.map Exts.Date.toRFC3339 doc.meetingDate )
-        , ( "clauses", Encode.list <| List.map (encodeDocClause doc) <| List.sortBy .pos <| Dict.values doc.clauses )
+        , ( "clauses"
+          , Dict.values doc.clauses
+                |> List.filter (not << String.isEmpty << String.trim << .content)
+                |> List.sortBy .pos
+                |> List.map (encodeDocClause doc)
+                |> Encode.list
+          )
         ]
 
 
