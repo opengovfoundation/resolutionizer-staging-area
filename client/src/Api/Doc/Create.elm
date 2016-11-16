@@ -9,6 +9,8 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
 import RemoteData
+import Regex
+import String
 
 
 type alias Request =
@@ -84,5 +86,48 @@ encodeDocClause : Doc.Model -> Doc.Clause -> Encode.Value
 encodeDocClause doc clause =
     Encode.object
         [ ( "type", Encode.string <| Doc.getDisplayNameForClauseType doc clause.ctype )
-        , ( "content", Encode.string clause.content )
+        , ( "content", Encode.string (sanitizeClauseContent doc clause.content) )
         ]
+
+
+sanitizeClauseContent : Doc.Model -> String -> String
+sanitizeClauseContent doc content =
+    content
+        |> String.trim
+        |> stripClausePreface doc
+        |> capitalizeFirstLetter
+        |> stripTrailingJoinPhrase
+
+
+stripClausePreface : Doc.Model -> String -> String
+stripClausePreface doc clauseText =
+    let
+        replaceRegexStr =
+            "^(" ++ (String.join "|" <| List.map .displayName <| Dict.values doc.validClauseTypes) ++ "), "
+
+        replaceRegex =
+            Regex.caseInsensitive (Regex.regex replaceRegexStr)
+    in
+        Regex.replace (Regex.AtMost 1) replaceRegex (\_ -> "") clauseText
+
+
+capitalizeFirstLetter : String -> String
+capitalizeFirstLetter string =
+    String.toUpper (String.slice 0 1 string) ++ String.dropLeft 1 string
+
+
+stripTrailingJoinPhrase : String -> String
+stripTrailingJoinPhrase clauseText =
+    let
+        joinPhrases =
+            [ "; and"
+            , "; now, therefore"
+            ]
+
+        joinPhraseRegexStr =
+            "(" ++ (String.join "|" joinPhrases) ++ ")$"
+
+        joinPhraseRegex =
+            Regex.caseInsensitive (Regex.regex joinPhraseRegexStr)
+    in
+        Regex.replace (Regex.AtMost 1) joinPhraseRegex (\_ -> "") clauseText
