@@ -582,8 +582,10 @@ viewPreviewRequest request =
             text "Failed"
 
         RemoteData.Success { id, urls } ->
-            div []
-                [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+            div [ class "document-preview-container" ]
+                [ div [ class "document-preview-image-wrapper" ]
+                    [ img [ class "document-preview-image img-responsive", src urls.preview ] []
+                    ]
                 , viewBackButton
                 , a [ class "usa-button", href urls.original ] [ text "Download PDF" ]
                 ]

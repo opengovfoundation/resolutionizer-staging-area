@@ -197,9 +197,27 @@ legend {
     display: block;
 }
 
+.document-preview-image-wrapper {
+    overflow: auto;
+    transition: all 0.3s;
+}
+
 img.document-preview-image {
     max-height: 75vh;
     border: 1px solid #ccc;
+}
+
+img.document-preview-image:hover {
+    max-height: 100%;
+    -moz-transfrom: scale(2);
+    -ms-transfrom: scale(2);
+    -webkit-transfrom: scale(2);
+    transform: scale(2);
+
+    -moz-transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
 }
 
 .center-block {
