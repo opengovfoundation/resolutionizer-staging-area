@@ -10,6 +10,7 @@ import Json.Decode.Pipeline as Decode
 import Json.Encode as Encode
 import RemoteData
 import Regex
+import String
 
 
 type alias Request =
