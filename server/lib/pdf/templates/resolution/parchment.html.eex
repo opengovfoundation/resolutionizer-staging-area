@@ -60,7 +60,7 @@
    * Main
    */
 
-  .main p {
+  .main p.clause-text {
     text-indent: 30px;
     text-align: justify;
     line-height: 1.3em;
@@ -70,11 +70,11 @@
     page-break-inside: avoid;
   }
 
-  .main p:first-child {
+  .main .clause-group:first-child p {
     text-indent: 76px;
   }
 
-  .main p:first-child .clause {
+  .main .clause-group:first-child p .clause {
     display: none;
   }
 
@@ -137,6 +137,11 @@
     margin-bottom: 0;
     padding-bottom: 0;
   }
+
+  .main .clause-group:last-child {
+    page-break-inside: avoid;
+  }
+
 </style>
 
 </head>
@@ -198,19 +203,24 @@
 
   <div class="main">
     <%= for %{ "type" => type, "content" => content } <- @clauses do %>
-      <p class="clause-group">
-        <span class="clause"><%= type %></span>, <%= content %><span class="join-and">; and</span><span class="join-therefore">; now, therefore</span>
-      </p>
+      <div class="clause-group">
+        <p class="clause-text">
+          <span class="clause"><%= type %></span>, <%= content %><span class="join-and">; and</span><span class="join-therefore">; now, therefore</span>
+        </p>
+
+        <%= if content == (List.last(@clauses) |> Map.get("content")) do %>
+          <div class="signatures">
+            <div class="signature">
+              <p>Mayor</p>
+            </div>
+            <div class="signature">
+              <p>City Clerk</p>
+            </div>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   </div>
 
-  <div class="signatures">
-    <div class="signature">
-      <p>Mayor</p>
-    </div>
-    <div class="signature">
-      <p>City Clerk</p>
-    </div>
-  </div>
 </body>
 </html>
