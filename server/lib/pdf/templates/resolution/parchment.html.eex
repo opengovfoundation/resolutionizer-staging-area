@@ -112,7 +112,7 @@
     padding-left: 50%;
     margin-right: 0;
     padding-right: 0;
-    padding-top: 80px;
+    padding-top: 50px;
 
     page-break-inside: avoid;
   }
@@ -122,10 +122,20 @@
 
     border-top: 1px solid black;
 
-    padding-bottom: 80px;
+    padding-bottom: 60px;
 
     text-align: center;
     text-transform: uppercase;
+  }
+
+  .signatures .signature:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .signatures .signature p {
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
 </style>
 
@@ -202,6 +212,5 @@
       <p>City Clerk</p>
     </div>
   </div>
-
 </body>
 </html>
